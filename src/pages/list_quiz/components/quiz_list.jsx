@@ -33,6 +33,9 @@ function Quiz_list(props) {
 
     // クイズリストの取得が必要になった時に呼び出す
     useEffect(() => {
+        // クイズリストをリセット
+        props.Set_quiz_list([]);
+        props.now_numRef.current = props.quiz_sum; // クイズの総数にリセット
         get_quiz_list(props.now_numRef.current);
     }, [props.filter]);  // フィルタリングの変更時にもリストを更新
 

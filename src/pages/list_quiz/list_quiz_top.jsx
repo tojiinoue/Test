@@ -73,6 +73,25 @@ function List_quiz_top(props) {
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
     };
+    
+    // クイズリストをリセットする関数を追加
+    const resetQuizList = () => {
+        Set_quiz_list([]); // クイズリストを空にリセット
+        now_numRef.current = quiz_sum; // クイズの総数にリセット
+    };
+
+    // クイズに回答後に一覧に戻る前にリセットを行う
+    const handleQuizAnswer = () => {
+        // クイズに回答する処理を実行
+        resetQuizList(); // クイズリストをリセット
+        // 一覧に戻る処理を追加
+    };
+
+    // フィルタリング条件が変更された時にクイズリストをリセットして再取得
+    useEffect(() => {
+        resetQuizList();  // リストをリセット
+        loadMoreQuizzes(); // 新しいフィルタリング条件でクイズを取得
+    }, [filter, loadMoreQuizzes]);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
