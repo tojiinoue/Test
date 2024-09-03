@@ -78,7 +78,7 @@ function Investment_to_quiz() {
                         このテストのIDは{id}です
                     </div>
                     <div className="col-10">
-                        以下に追加する報酬(Wake)の量を指定してください<br />
+                        以下に追加する報酬(FLT)の量を指定してください<br />
                         <input
                             type="text"
                             className="form-control"
@@ -87,9 +87,9 @@ function Investment_to_quiz() {
                                 setAmount(event.target.value);
                             }}
                         />
-                        正答した生徒一人ひとりに与えられるWakeトークン量： {amount}Wake
+                        正答した生徒一人ひとりに与えられるFLTトークン量： {amount}FLT
                         <br />
-                        あなたから払いだされるWakeトークン量： {amount * numOfStudent}Wake
+                        あなたから払いだされるFLTトークン量： {amount * numOfStudent}FLT
 
                     </div>
                     <div className="col-10" style={{ marginTop: "20px" }}>

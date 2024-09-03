@@ -1,17 +1,17 @@
-export const berg = {
-    id: 8995,
-    name: "Berg",
-    network: "bloxberg",
+export const amoy = {
+    id: 80002,
+    name: "Amoy",
+    network: "Polygon Pos Amoy",
     iconUrl: "",
     iconBackground: "#000000",
     nativeCurrency: {
         decimals: 18,
-        name: "BERG",
-        symbol: "BERG",
+        name: "MATIC",
+        symbol: "MATIC",
     },
     rpcUrls: {
         default: {
-            http: ["https://core.bloxberg.org"],
+            http: ["https://rpc-amoy.polygon.technology/"],
             // public rpc url
         },
     },

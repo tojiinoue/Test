@@ -2,18 +2,19 @@ import { createPublicClient, createWalletClient, http, getContract, parseAbiItem
 import token_contract from "./token_abi.json";
 import quiz_contract from "./quiz_abi.json";
 import { chainId, rpc, quiz_address, token_address } from "./config";
-import { berg } from "./network";
+import { amoy } from "./network";
+//import { Status } from "discord.js";
 
 const { ethereum } = window;
 const homeUrl = process.env.PUBLIC_URL;
 
 const walletClient = createWalletClient({
-    chain: berg,
+    chain: amoy,
     transport: custom(window.ethereum),
 });
 
 const publicClient = createPublicClient({
-    chain: berg,
+    chain: amoy,
     transport: http(),
 });
 
@@ -32,6 +33,31 @@ const quiz = getContract({
     abi: quiz_abi,
     walletClient,
     publicClient,
+});
+
+// クイズのフィルタリング状態を管理するオブジェクト
+const QuizStatuses = {
+    ALL: null,          // 全てのクイズを表示
+    UNANSWERED: 0,      // 未回答
+    INCORRECT: 1,       // 不正解
+    CORRECT: 2          // 正解
+};
+
+// フィルタリング条件を設定する変数
+let quizStatus = QuizStatuses.ALL; // 初期値は全てのクイズを表示
+
+// フィルタリング条件を動的に変更する関数
+function updateQuizStatus(newStatus) {
+    quizStatus = newStatus;
+    console.log(`Quiz status updated to: ${quizStatus}`);
+    // 必要に応じて、クイズのリストを再取得するなどの処理を行う
+    // 例: fetchQuizzes();
+}
+
+// イベントリスナーを追加して、ユーザーのフィルタリングオプションの変更を監視
+document.getElementById('filterDropdown').addEventListener('change', (event) => {
+    const selectedStatus = event.target.value;
+    updateQuizStatus(QuizStatuses[selectedStatus.toUpperCase()]);
 });
 
 if (window.ethereum) {
@@ -69,7 +95,7 @@ class Contracts_MetaMask {
                 type: "ERC20",
                 options: {
                     address: token_address,
-                    symbol: "Wake",
+                    symbol: "Trial",
                     decimals: 18,
                 },
             },
@@ -78,7 +104,7 @@ class Contracts_MetaMask {
 
     async change_network() {
         try {
-            await walletClient.switchChain({ id: berg.id });
+            await walletClient.switchChain({ id: amoy.id });
         } catch (e) {
             //userがrejectした場合
             if (e.code === 4001) {
@@ -90,7 +116,7 @@ class Contracts_MetaMask {
     }
     async add_network() {
         try {
-            await walletClient.addChain({ chain: berg });
+            await walletClient.addChain({ chain: amoy });
         } catch (e) {
             console.log(e);
         }
@@ -611,31 +637,30 @@ class Contracts_MetaMask {
 
     //startからendまでのクイズを取得
 
-    async get_quiz_list(start, end) {
-        //取得したクイズを格納する配列
+    async get_quiz_list(start, end, statusFilter = null) {
         let res = [];
         let account = await this.get_address();
-
-        console.log(start, end);
-        if (start <= end) {
+    
+        try {
+            // クイズリストを取得するループ
             for (let i = start; i < end; i++) {
-                console.log(i);
-                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
-                console.log(res);
+                let quizData = await quiz.read.get_quiz_simple({ account, args: [i] });
+    
+                // フィルタリング条件に基づいてクイズを追加
+                if (statusFilter === null || quizData.status === statusFilter) {
+                    res.push(quizData);
+                }
             }
-        } else {
-            for (let i = start - 1; i >= end; i--) {
-                console.log(i);
-                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
-                console.log(res);
-            }
+        } catch (err) {
+            console.log(err);
         }
         return res;
     }
-
-    async get_quiz_lenght() {
+    
+    
+    async get_quiz_length() {
         return await quiz.read.get_quiz_length();
-    }
+    }    
 
     async get_num_of_students() {
         return Number(await quiz.read.get_num_of_students());

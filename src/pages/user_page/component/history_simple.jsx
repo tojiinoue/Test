@@ -35,7 +35,7 @@ function Simple_history(props) {
                     <div className="col-5 right" style={{padding: "0"}}>
                         <div>to</div>
                         <div>{props.history._recipient.slice(0, 12)}</div>
-                        <div>{Number(props.history._value) / 10 ** 18}Wake</div>
+                        <div>{Number(props.history._value) / 10 ** 18}FLT</div>
                     </div>
                 </div>
 

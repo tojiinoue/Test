@@ -43,7 +43,6 @@ function User_card(props) {
         console.log(props.state);
         console.log(props.user_name);
         console.log(props.icons);
-        console.log(props.rank);
         Setstate(props.state);
     }, []);
 
@@ -77,7 +76,7 @@ function User_card(props) {
                     <div className="row" style={{ marginTop: "20px" }}>
                         <div className="col token d-flex flex-column">
                             <div>保有トークン</div>
-                            <div>{props.token}wake</div>
+                            <div>{props.token}FLT</div>
                         </div>
                         <div className="col token-result d-flex flex-column">
                             <div>現在の順位</div>
@@ -85,7 +84,7 @@ function User_card(props) {
                         </div>
                         <div className="col token-result d-flex flex-column">
                             <div>獲得点数</div>
-                            <div>{props.result}点</div>
+                            <div>{Number(props.result)/40}点</div>
                         </div>
                     </div>
                 </div>
@@ -124,11 +123,11 @@ function User_card(props) {
                     <div className="row" style={{ marginTop: "20px" }}>
                         <div className="col token d-flex flex-column">
                             <div>保有トークン</div>
-                            <div>{props.token}wake</div>
+                            <div>{props.token}FLT</div>
                         </div>
                         <div className="col token-result d-flex flex-column">
                             <div>授業での配点</div>
-                            <div>{props.result}点</div>
+                            <div>{Number(props.result)/40}点</div>
                         </div>
                     </div>
                 </div>
