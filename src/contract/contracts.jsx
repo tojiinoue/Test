@@ -35,53 +35,12 @@ const quiz = getContract({
     publicClient,
 });
 
-/* // クイズのフィルタリング状態を管理するオブジェクト
+// クイズのフィルタリング状態を管理するオブジェクト
 const QuizStatuses = {
     ALL: null,          // 全てのクイズを表示
     UNANSWERED: 0,      // 未回答
     INCORRECT: 1,       // 不正解
     CORRECT: 2          // 正解
-};
-
-// フィルタリング条件を設定する変数
-let quizStatus = QuizStatuses.ALL; // 初期値は全てのクイズを表示
-
-// フィルタリング条件を動的に変更する関数
-function updateQuizStatus(newStatus) {
-    quizStatus = newStatus;
-    console.log(`Quiz status updated to: ${quizStatus}`);
-    // 必要に応じて、クイズのリストを再取得するなどの処理を行う
-    // 例: fetchQuizzes();
-}
-
-// イベントリスナーを追加して、ユーザーのフィルタリングオプションの変更を監視
-document.getElementById('filterDropdown').addEventListener('change', (event) => {
-    const selectedStatus = event.target.value;
-    updateQuizStatus(QuizStatuses[selectedStatus.toUpperCase()]);
-}); */
-
-if (window.ethereum) {
-    window.ethereum.on("chainChanged", () => {
-        window.location.reload();
-    });
-    window.ethereum.on("accountsChanged", () => {
-        window.location.reload();
-    });
-}
-
-const sliceByNumber = (array, number) => {
-    // 元の配列(今回で言うと変数arrayを指します)を基に、分割して生成する配列の個数を取得する処理です。
-    // 今回は元の配列の要素数が10個、分割して生成する配列は2つの要素を持つことを期待しています。
-    // 上記のことから今回は、元の配列から5つの配列に分割されることになります。
-    const length = Math.ceil(array.length / number);
-
-    // new Arrayの引数に上記で取得した配列の個数を渡します。これで配列の中に5つの配列が生成されます。
-    // 5つの配列分だけループ処理(mapメソッド)をします。map処理の中でsliceメソッドを使用して、元の配列から新しい配列を作成して返却します。
-    // sliceメソッドの中では、要素数2つの配列を生成します。
-    // fillメソッドはインデックスのキーを生成するために使用しています。もし使用しない場合はmapメソッドはindexがないため、mapメソッドが機能しません。
-    return new Array(length)
-        .fill()
-        .map((_, i) => array.slice(i * number, (i + 1) * number));
 };
 
 class Contracts_MetaMask {
@@ -637,7 +596,7 @@ class Contracts_MetaMask {
 
     //startからendまでのクイズを取得
 
-    /* async get_quiz_list(start, end, statusFilter = null) {
+    async get_quiz_list(start, end, statusFilter = null) {
         let res = [];
         let account = await this.get_address();
     
@@ -653,28 +612,6 @@ class Contracts_MetaMask {
             }
         } catch (err) {
             console.log(err);
-        }
-        return res;
-    } */
-
-    async get_quiz_list(start, end) {
-        //取得したクイズを格納する配列
-        let res = [];
-        let account = await this.get_address();
-    
-        console.log(start, end);
-        if (start <= end) {
-            for (let i = start; i < end; i++) {
-                console.log(i);
-                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
-                console.log(res);
-            }
-        } else {
-            for (let i = start - 1; i >= end; i--) {
-                console.log(i);
-                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
-                console.log(res);
-            }
         }
         return res;
     }
@@ -894,4 +831,4 @@ class Contracts_MetaMask {
     }
 }
 
-export { Contracts_MetaMask };
+export { Contracts_MetaMask, QuizStatuses };
