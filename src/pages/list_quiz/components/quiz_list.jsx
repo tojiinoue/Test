@@ -7,6 +7,8 @@ function Quiz_list(props) {
 
     // クイズのリストを取得して表示を管理
     const get_quiz_list = async (now) => {
+        if (!props.cont) return;  // contがまだ準備できていない場合は中断
+
         // フィルタリングの状態を数値に変換
         const filterStatus = props.filter === 'all' ? null : parseInt(props.filter, 10);
 
@@ -32,13 +34,13 @@ function Quiz_list(props) {
 
     // クイズリストの取得が必要になった時に呼び出す
     useEffect(() => {
-        if (props.quiz_sum !== null) {
+        if (props.cont) {  // contが準備できている場合のみ実行
             // クイズリストをリセット
             props.Set_quiz_list([]);
             props.now_numRef.current = props.quiz_sum; // クイズの総数にリセット
             get_quiz_list(props.now_numRef.current);
         }
-    }, [props.filter, props.quiz_sum]);  // フィルタリングの変更時にもリストを更新
+    }, [props.filter, props.cont]);  // フィルタリングの変更時やcontが変わった時にもリストを更新
 
     return null;  // このコンポーネント自体は何もレンダリングしない
 }

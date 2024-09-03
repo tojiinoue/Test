@@ -5,7 +5,8 @@ import Simple_quiz from "./components/quiz_simple";
 import Quiz_list from "./components/quiz_list";
 
 function List_quiz_top(props) {
-    const cont = new Contracts_MetaMask();
+    // Contracts_MetaMaskのインスタンスをステートとして管理
+    const [cont, setCont] = useState(null);
     const targetRef = useRef(null);
     const now_numRef = useRef(0);
     const [quiz_sum, Set_quiz_sum] = useState(null);
@@ -15,9 +16,20 @@ function List_quiz_top(props) {
     const [loading, setLoading] = useState(false);  // ローディング状態を管理
     const [error, setError] = useState(null);       // エラーメッセージを管理
 
+    // Contracts_MetaMaskのインスタンスを初期化
+    useEffect(() => {
+        const initContract = () => {
+            const contractInstance = new Contracts_MetaMask();
+            setCont(contractInstance);
+        };
+        initContract();
+    }, []);
+
     // クイズの総数を取得する
     useEffect(() => {
         const fetchQuizLength = async () => {
+            if (!cont) return;  // contがまだ準備できていない場合は中断
+
             try {
                 console.log("Fetching quiz length...");
                 const data = await cont.get_quiz_length();
@@ -30,13 +42,13 @@ function List_quiz_top(props) {
                 setError("クイズの総数を取得できませんでした。");
             }
         };
-    
+
         fetchQuizLength();
     }, [cont]);
 
     // クイズリストをロードする関数を定義
     const loadMoreQuizzes = useCallback(async () => {
-        if (loading || quiz_sum === null) return;  // ローディング中またはクイズの総数が未取得の場合は処理を中断
+        if (loading || !cont) return;  // ローディング中またはcontが準備できていない場合は中断
         setLoading(true);     // ローディング状態を設定
 
         try {
@@ -62,19 +74,38 @@ function List_quiz_top(props) {
         } finally {
             setLoading(false);  // ローディング状態を解除
         }
-    }, [filter, add_num, cont, loading, quiz_sum]);
+    }, [filter, add_num, cont, loading]);
 
+    // フィルタリング条件が変更された時にクイズリストを再取得
+    useEffect(() => {
+        if (cont) {
+            loadMoreQuizzes();
+        }
+    }, [filter, loadMoreQuizzes, cont]);
+
+    // フィルタリングオプションが変更された時の処理
+    const handleFilterChange = (event) => {
+        setFilter(event.target.value);
+    };
+    
     // クイズリストをリセットする関数を追加
-    const resetQuizList = useCallback(() => {
+    const resetQuizList = () => {
         Set_quiz_list([]); // クイズリストを空にリセット
         now_numRef.current = quiz_sum; // クイズの総数にリセット
-    }, [quiz_sum]);
+    };
+
+    // クイズに回答後に一覧に戻る前にリセットを行う
+    const handleQuizAnswer = () => {
+        // クイズに回答する処理を実行
+        resetQuizList(); // クイズリストをリセット
+        // 一覧に戻る処理を追加
+    };
 
     // フィルタリング条件が変更された時にクイズリストをリセットして再取得
     useEffect(() => {
         resetQuizList();  // リストをリセット
         loadMoreQuizzes(); // 新しいフィルタリング条件でクイズを取得
-    }, [filter, loadMoreQuizzes, resetQuizList]);
+    }, [filter, loadMoreQuizzes]);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
