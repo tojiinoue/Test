@@ -28,7 +28,7 @@ function Quiz_list(props) {
         
         // クイズリストを更新
         //const now_quiz_list = add_quiz_list.map((quiz) => <Simple_quiz quiz={quiz} key={quiz.id} />);
-        props.Set_quiz_list((prevList) => [...prevList, ...now_quiz_list]);
+        props.Set_quiz_list((prevList) => [...prevList, ...uniqueQuizzes]);
     };
 
     // クイズリストの取得が必要になった時に呼び出す
