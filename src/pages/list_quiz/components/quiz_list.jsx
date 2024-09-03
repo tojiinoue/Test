@@ -27,17 +27,18 @@ function Quiz_list(props) {
         );
         
         // クイズリストを更新
-        //const now_quiz_list = add_quiz_list.map((quiz) => <Simple_quiz quiz={quiz} key={quiz.id} />);
         props.Set_quiz_list((prevList) => [...prevList, ...uniqueQuizzes]);
     };
 
     // クイズリストの取得が必要になった時に呼び出す
     useEffect(() => {
-        // クイズリストをリセット
-        props.Set_quiz_list([]);
-        props.now_numRef.current = props.quiz_sum; // クイズの総数にリセット
-        get_quiz_list(props.now_numRef.current);
-    }, [props.filter]);  // フィルタリングの変更時にもリストを更新
+        if (props.quiz_sum !== null) {
+            // クイズリストをリセット
+            props.Set_quiz_list([]);
+            props.now_numRef.current = props.quiz_sum; // クイズの総数にリセット
+            get_quiz_list(props.now_numRef.current);
+        }
+    }, [props.filter, props.quiz_sum]);  // フィルタリングの変更時にもリストを更新
 
     return null;  // このコンポーネント自体は何もレンダリングしない
 }
