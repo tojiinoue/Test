@@ -21,8 +21,13 @@ function Quiz_list(props) {
             props.now_numRef.current = now - add_num.current;  // 次回の開始位置を更新
         }
 
+        // 重複クイズの削除
+        const uniqueQuizzes = add_quiz_list.filter(
+            (quiz) => !props.quiz_list.some((existingQuiz) => existingQuiz.quiz_id === quiz.quiz_id)
+        );
+        
         // クイズリストを更新
-        const now_quiz_list = add_quiz_list.map((quiz) => <Simple_quiz quiz={quiz} key={quiz.id} />);
+        //const now_quiz_list = add_quiz_list.map((quiz) => <Simple_quiz quiz={quiz} key={quiz.id} />);
         props.Set_quiz_list((prevList) => [...prevList, ...now_quiz_list]);
     };
 

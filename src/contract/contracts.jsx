@@ -617,12 +617,26 @@ class Contracts_MetaMask {
                 // フィルタリング条件に基づいてクイズを追加
                 if (statusFilter === null || quizData.status === statusFilter) {
                     res.push(quizData);
+                    if (this.validateQuizData(quizData)) {
+                        res.push(quizData);
+                    }
                 }
             }
         } catch (err) {
             console.log(err);
         }
         return res;
+    }
+
+    // クイズデータのバリデーション関数を追加
+    validateQuizData(quizData) {
+        // 必要なフィールドが揃っているか、型が正しいかを確認
+        if (!quizData.quiz_id || typeof quizData.quiz_id !== 'number') return false;
+        if (!quizData.title || typeof quizData.title !== 'string') return false;
+        if (isNaN(quizData.reward)) return false;
+        // 他のフィールドもチェック
+        // ...
+        return true;
     }
     
     

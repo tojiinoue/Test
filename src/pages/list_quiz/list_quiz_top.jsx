@@ -46,7 +46,14 @@ function List_quiz_top(props) {
 
             // contracts.jsxのget_quiz_listメソッドを呼び出し
             const quizzes = await cont.get_quiz_list(start, end, filterStatus);
-            Set_quiz_list((prevList) => [...prevList, ...quizzes]);
+
+            // クイズデータの重複を削除井上追加
+            Set_quiz_list((prevList) => {
+                const newQuizzes = quizzes.filter(
+                    (quiz) => !prevList.some((prevQuiz) => prevQuiz.quiz_id === quiz.quiz_id)
+                );
+                return [...prevList, ...newQuizzes];
+            });
 
             now_numRef.current = start;
         } catch (err) {
