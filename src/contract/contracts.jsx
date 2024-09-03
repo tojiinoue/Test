@@ -513,8 +513,7 @@ class Contracts_MetaMask {
                     let res = await publicClient.waitForTransactionReceipt({ hash });
                     console.log(res);
                     //document.location.href = "/user_page/" + account;
-
-                    await this.get_quiz_list(0, 10); // 必要なクイズの範囲を再取得
+                    await this.get_quiz_list(0, 10); // 必要なクイズの範囲を再取得井上追加
                     document.location.href = homeUrl + "/list_quiz";
                 }
                 console.log("create_answer_cont");
@@ -628,8 +627,16 @@ class Contracts_MetaMask {
     
     
     async get_quiz_length() {
-        return await quiz.read.get_quiz_length();
-    }    
+        try {
+            console.log("Attempting to fetch quiz length from contract...");
+            const length = await quiz.read.get_quiz_length();  // クエリが成功するかどうかを確認
+            console.log("Quiz length retrieved successfully:", length);
+            return length;
+        } catch (error) {
+            console.error("Error in get_quiz_length method:", error);
+            throw error;  // フロントエンドにエラーを伝えるために再スロー
+        }
+    }  
 
     async get_num_of_students() {
         return Number(await quiz.read.get_num_of_students());

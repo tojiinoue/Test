@@ -19,8 +19,10 @@ function List_quiz_top(props) {
     useEffect(() => {
         const fetchQuizLength = async () => {
             try {
+                console.log("Fetching quiz length...");
                 const data = await cont.get_quiz_length();
                 const now = parseInt(data);
+                console.log("Quiz length obtained:", now);
                 Set_quiz_sum(now);
                 now_numRef.current = now;
             } catch (err) {
@@ -28,7 +30,7 @@ function List_quiz_top(props) {
                 setError("クイズの総数を取得できませんでした。");
             }
         };
-
+    
         fetchQuizLength();
     }, [cont]);
 
