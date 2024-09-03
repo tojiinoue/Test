@@ -35,7 +35,7 @@ const quiz = getContract({
     publicClient,
 });
 
-// クイズのフィルタリング状態を管理するオブジェクト
+/* // クイズのフィルタリング状態を管理するオブジェクト
 const QuizStatuses = {
     ALL: null,          // 全てのクイズを表示
     UNANSWERED: 0,      // 未回答
@@ -58,7 +58,7 @@ function updateQuizStatus(newStatus) {
 document.getElementById('filterDropdown').addEventListener('change', (event) => {
     const selectedStatus = event.target.value;
     updateQuizStatus(QuizStatuses[selectedStatus.toUpperCase()]);
-});
+}); */
 
 if (window.ethereum) {
     window.ethereum.on("chainChanged", () => {
@@ -637,7 +637,7 @@ class Contracts_MetaMask {
 
     //startからendまでのクイズを取得
 
-    async get_quiz_list(start, end, statusFilter = null) {
+    /* async get_quiz_list(start, end, statusFilter = null) {
         let res = [];
         let account = await this.get_address();
     
@@ -653,6 +653,28 @@ class Contracts_MetaMask {
             }
         } catch (err) {
             console.log(err);
+        }
+        return res;
+    } */
+
+    async get_quiz_list(start, end) {
+        //取得したクイズを格納する配列
+        let res = [];
+        let account = await this.get_address();
+    
+        console.log(start, end);
+        if (start <= end) {
+            for (let i = start; i < end; i++) {
+                console.log(i);
+                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
+                console.log(res);
+            }
+        } else {
+            for (let i = start - 1; i >= end; i--) {
+                console.log(i);
+                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
+                console.log(res);
+            }
         }
         return res;
     }
