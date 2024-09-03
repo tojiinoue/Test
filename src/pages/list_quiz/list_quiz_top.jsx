@@ -1,5 +1,3 @@
-// list_quiz_top.jsx
-
 import { Contracts_MetaMask, QuizStatuses } from "../../contract/contracts";
 import Form from "react-bootstrap/Form";
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -32,14 +30,18 @@ function List_quiz_top(props) {
 
         // contracts.jsxのget_quiz_listメソッドを呼び出し
         const quizzes = await cont.get_quiz_list(start, end, filterStatus);
-        Set_quiz_list((prevList) => [...prevList, ...quizzes]);
+        
+        // クイズリストを上書きするか追加するかを決定
+        Set_quiz_list((prevList) => start === 0 ? quizzes : [...prevList, ...quizzes]);
 
         now_numRef.current = start;
     }, [filter, add_num, cont]);
 
     // フィルタリング条件が変更された時にクイズリストを再取得
     useEffect(() => {
-        loadMoreQuizzes();
+        now_numRef.current = quiz_sum; // フィルタリング条件が変更された際に開始位置をリセット
+        Set_quiz_list([]); // リストをクリア
+        loadMoreQuizzes(); // クイズを再取得
     }, [filter, loadMoreQuizzes]);
 
     // フィルタリングオプションが変更された時の処理

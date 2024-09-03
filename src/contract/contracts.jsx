@@ -513,6 +513,8 @@ class Contracts_MetaMask {
                     let res = await publicClient.waitForTransactionReceipt({ hash });
                     console.log(res);
                     //document.location.href = "/user_page/" + account;
+
+                    await this.get_quiz_list(0, 10); // 必要なクイズの範囲を再取得
                     document.location.href = homeUrl + "/list_quiz";
                 }
                 console.log("create_answer_cont");
