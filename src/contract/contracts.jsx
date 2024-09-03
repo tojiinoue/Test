@@ -43,6 +43,14 @@ const QuizStatuses = {
     CORRECT: 2          // 正解
 };
 
+// 配列を指定されたサイズで分割する関数
+const sliceByNumber = (array, number) => {
+    const length = Math.ceil(array.length / number);
+    return new Array(length)
+        .fill()
+        .map((_, i) => array.slice(i * number, (i + 1) * number));
+};
+
 class Contracts_MetaMask {
     async get_chain_id() {
         return await walletClient.getChainId();
