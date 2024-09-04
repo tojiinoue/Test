@@ -1,166 +1,72 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { Contracts_MetaMask, QuizStatuses } from "../../contract/contracts";
+import { Contracts_MetaMask } from "../../contract/contracts";
 import Form from "react-bootstrap/Form";
+import { useState, useEffect, useRef } from "react";
+import MDEditor, { selectWord } from "@uiw/react-md-editor";
+import { resolvePath, useParams } from "react-router-dom";
 import Simple_quiz from "./components/quiz_simple";
 import Quiz_list from "./components/quiz_list";
+import { Link } from "react-router-dom";
 
 function List_quiz_top(props) {
-    const [cont, setCont] = useState(null); // Contracts_MetaMaskのインスタンスをステートとして管理
-    const [quiz_sum, Set_quiz_sum] = useState(null);
-    const [quiz_list, Set_quiz_list] = useState([]);
-    const [add_num, Set_add_num] = useState(7);
-    const [filter, setFilter] = useState('all');
-    const [loading, setLoading] = useState(false);  // ローディング状態を管理
-    const [error, setError] = useState(null);       // エラーメッセージを管理
-    const targetRef = useRef(null);
-    const now_numRef = useRef(0);
+    //クイズのコントラクト
+    let cont = new Contracts_MetaMask();
 
-    // Contracts_MetaMaskのインスタンスを初期化
+    //現在表示している個数を保持するref
+    const now_numRef = useRef(0); //保存
+    //クイズの総数
+    const [quiz_sum, Set_quiz_sum] = useState(null); //保存
+
+    //表示するクイズのリスト
+    const [quiz_list, Set_quiz_list] = useState([]); //保存
+    //１回の更新で追加で表示する個数
+    const [add_num, Set_add_num] = useState(7);
+    // コンテナのrefを作成
+    const containerRef = useRef(null);
+
+    const callback = (entries, observer) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                // ターゲットの<div>が画面に表示された場合に実行される関数
+                console.log("Target div is visible on the screen!");
+                // ここに実行したい関数を記述
+
+                // console.log("///////",now_num);
+            }
+        });
+    };
+
     useEffect(() => {
-        const contractInstance = new Contracts_MetaMask();
-        setCont(contractInstance);
+        cont.get_quiz_lenght().then((data) => {
+            // Promise オブジェクトが解決された後の処理を記述
+            console.log(Number(data));
+            let now = parseInt(Number(data));
+            Set_quiz_sum(now);
+            now_numRef.current = now;
+        });
     }, []);
 
-    // クイズの総数を取得する
-    useEffect(() => {
-        if (!cont) return;  // contがまだ準備できていない場合は中断
+    const targetRef = useRef(null); // ターゲット要素のrefを作成
 
-        const fetchQuizLength = async () => {
-            try {
-                console.log("Fetching quiz length...");
-                const data = await cont.get_quiz_length();
-                const now = parseInt(data);
-                console.log("Quiz length obtained:", now);
-                Set_quiz_sum(now);
-                now_numRef.current = now;
-            } catch (err) {
-                console.error("Error fetching quiz length:", err);
-                setError("クイズの総数を取得できませんでした。");
-            }
-        };
-
-        fetchQuizLength();
-    }, [cont]); // contが準備できたらデータを取得
-
-    // クイズリストをリセットする関数を追加
-    const resetQuizList = () => {
-        Set_quiz_list([]); // クイズリストを空にリセット
-    
-        if (quiz_sum === 0 || quiz_sum === null) {
-            setError("クイズが存在しません。");
-            return;
-        }
-    
-        now_numRef.current = quiz_sum; // クイズの総数にリセット
-    };
-
-    // クイズリストをロードする関数を定義
-    const loadMoreQuizzes = useCallback(async () => {
-        if (loading || !cont) return;  // ローディング中またはcontが準備できていない場合は中断
-        setLoading(true);  // ローディング状態を設定
-    
-        try {
-            const filterStatus = filter === 'all' ? null : parseInt(filter, 10); // フィルタリング条件を設定
-            const end = now_numRef.current;
-            const start = Math.max(0, end - add_num);
-    
-            const quizzes = await cont.get_quiz_list(start, end, filterStatus);
-    
-            if (!quizzes || quizzes.length === 0) {
-                setError("該当するクイズが見つかりませんでした。別のフィルターを試してください。");
-                return;
-            }
-    
-            Set_quiz_list((prevList) => {
-                const newQuizzes = quizzes.filter(
-                    (quiz) => !prevList.some((prevQuiz) => prevQuiz.quiz_id === quiz.quiz_id)
-                );
-                return [...prevList, ...newQuizzes];
-            });
-    
-            now_numRef.current = start;
-        } catch (err) {
-            console.error("Error loading quizzes:", err);
-            setError("クイズのリストを取得できませんでした。サーバーの問題の可能性があります。");
-        } finally {
-            setLoading(false);  // ローディング状態を解除
-        }
-    }, [filter, add_num, cont, loading]);
-
-    // フィルタリング条件が変更された時にクイズリストをリセットして再取得
-    useEffect(() => {
-        resetQuizList();  // リストをリセット
-        if (cont) {
-            loadMoreQuizzes(); // 新しいフィルタリング条件でクイズを取得
-        }
-    }, [filter, loadMoreQuizzes, cont, resetQuizList]);
-
-    // フィルタリングオプションが変更された時の処理
-    const handleFilterChange = (event) => {
-        setFilter(event.target.value);
-    };
-
-    useEffect(() => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) {
-                    console.log("Target div is visible on the screen!");
-                    loadMoreQuizzes();
-                }
-            });
-        }, { threshold: 0.1 });
-
-        if (targetRef.current) {
-            observer.observe(targetRef.current);
-        }
-
-        return () => {
-            if (targetRef.current) {
-                observer.unobserve(targetRef.current);
-            }
-        };
-    }, [loadMoreQuizzes]);
-
-    if (error) {
-        return <div>{error}</div>;  // エラーメッセージを表示
-    }
-
-    if (quiz_sum !== null) {
+    if (quiz_sum != null) {
         return (
             <>
-                {/* フィルタリング機能 */}
-                <Form.Select value={filter} onChange={handleFilterChange}>
-                    <option value="all">全て</option>
-                    <option value="0">未回答</option>
-                    <option value="1">不正解</option>
-                    <option value="2">正解</option>
-                </Form.Select>
-
                 {/* スクロールを監視するコンポーネント */}
-                <Quiz_list
-                    cont={cont}
-                    add_num={add_num}
-                    Set_add_num={Set_add_num}
-                    quiz_sum={quiz_sum}
-                    Set_quiz_sum={Set_quiz_sum}
-                    quiz_list={quiz_list}
-                    Set_quiz_list={Set_quiz_list}
-                    targetRef={targetRef}
-                    now_numRef={now_numRef}
-                    filter={filter}
-                />
+                <Quiz_list cont={cont} add_num={add_num} Set_add_num={Set_add_num} quiz_sum={quiz_sum} Set_quiz_sum={Set_quiz_sum} quiz_list={quiz_list} Set_quiz_list={Set_quiz_list} targetRef={targetRef} now_numRef={now_numRef} />
 
-                {/* クイズリストの表示 */}
-                {quiz_list.map((quiz, index) => (
-                    <Simple_quiz key={index} quiz={quiz} />
-                ))}
-                {loading && <div>読み込み中...</div>}
-                <div ref={targetRef}>now_loading</div>
+                {/* */}
+                {quiz_list.map((quiz, index) => {
+                    if (index !== quiz_list.length - add_num) {
+                        return <>{quiz_list[index]}</>;
+                    }
+                })}
+                <div ref={targetRef}>
+                    {/* ターゲット要素aの内容 */}
+                    now_loading
+                </div>
             </>
         );
     } else {
         return <></>;
     }
 }
-
 export default List_quiz_top;

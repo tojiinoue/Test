@@ -3,7 +3,6 @@ import token_contract from "./token_abi.json";
 import quiz_contract from "./quiz_abi.json";
 import { chainId, rpc, quiz_address, token_address } from "./config";
 import { amoy } from "./network";
-//import { Status } from "discord.js";
 
 const { ethereum } = window;
 const homeUrl = process.env.PUBLIC_URL;
@@ -35,17 +34,25 @@ const quiz = getContract({
     publicClient,
 });
 
-// クイズのフィルタリング状態を管理するオブジェクト
-const QuizStatuses = {
-    ALL: null,          // 全てのクイズを表示
-    UNANSWERED: 0,      // 未回答
-    INCORRECT: 1,       // 不正解
-    CORRECT: 2          // 正解
-};
+if (window.ethereum) {
+    window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+    });
+    window.ethereum.on("accountsChanged", () => {
+        window.location.reload();
+    });
+}
 
-// 配列を指定されたサイズで分割する関数
 const sliceByNumber = (array, number) => {
+    // 元の配列(今回で言うと変数arrayを指します)を基に、分割して生成する配列の個数を取得する処理です。
+    // 今回は元の配列の要素数が10個、分割して生成する配列は2つの要素を持つことを期待しています。
+    // 上記のことから今回は、元の配列から5つの配列に分割されることになります。
     const length = Math.ceil(array.length / number);
+
+    // new Arrayの引数に上記で取得した配列の個数を渡します。これで配列の中に5つの配列が生成されます。
+    // 5つの配列分だけループ処理(mapメソッド)をします。map処理の中でsliceメソッドを使用して、元の配列から新しい配列を作成して返却します。
+    // sliceメソッドの中では、要素数2つの配列を生成します。
+    // fillメソッドはインデックスのキーを生成するために使用しています。もし使用しない場合はmapメソッドはindexがないため、mapメソッドが機能しません。
     return new Array(length)
         .fill()
         .map((_, i) => array.slice(i * number, (i + 1) * number));
@@ -256,7 +263,7 @@ class Contracts_MetaMask {
                         approval = await token.read.allowance({ account, args: [account, quiz_address] });
                         console.log(approval);
                         if (Number(approval) >= Number(reward)) {
-                            hash = await this._adding_reward(account, id, reward);
+                            hash = await this._addingReward(account, id, reward);
                             if (hash) {
                                 res = await publicClient.waitForTransactionReceipt({ hash });
                             }
@@ -513,7 +520,6 @@ class Contracts_MetaMask {
                     let res = await publicClient.waitForTransactionReceipt({ hash });
                     console.log(res);
                     //document.location.href = "/user_page/" + account;
-                    await this.get_quiz_list(0, 10); // 必要なクイズの範囲を再取得井上追加
                     document.location.href = homeUrl + "/list_quiz";
                 }
                 console.log("create_answer_cont");
@@ -605,48 +611,31 @@ class Contracts_MetaMask {
 
     //startからendまでのクイズを取得
 
-    async get_quiz_list(start, end, statusFilter = null) {
-    let res = [];
-    let account = await this.get_address();
+    async get_quiz_list(start, end) {
+        //取得したクイズを格納する配列
+        let res = [];
+        let account = await this.get_address();
 
-    try {
-        for (let i = start; i < end; i++) {
-            let quizData = await quiz.read.get_quiz_simple({ account, args: [i] });
-
-            // フィルタリング条件に基づいてクイズを追加
-            if (statusFilter === null || Number(quizData.state) === statusFilter) {
-                res.push(quizData);
+        console.log(start, end);
+        if (start <= end) {
+            for (let i = start; i < end; i++) {
+                console.log(i);
+                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
+                console.log(res);
+            }
+        } else {
+            for (let i = start - 1; i >= end; i--) {
+                console.log(i);
+                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
+                console.log(res);
             }
         }
-    } catch (err) {
-        console.log(err);
+        return res;
     }
-    return res;
-}
 
-    // クイズデータのバリデーション関数を追加
-    validateQuizData(quizData) {
-        // 必要なフィールドが揃っているか、型が正しいかを確認
-        if (!quizData.quiz_id || typeof quizData.quiz_id !== 'number') return false;
-        if (!quizData.title || typeof quizData.title !== 'string') return false;
-        if (isNaN(quizData.reward)) return false;
-        // 他のフィールドもチェック
-        // ...
-        return true;
+    async get_quiz_lenght() {
+        return await quiz.read.get_quiz_length();
     }
-    
-    
-    async get_quiz_length() {
-        try {
-            console.log("Attempting to fetch quiz length from contract...");
-            const length = await quiz.read.get_quiz_length();  // クエリが成功するかどうかを確認
-            console.log("Quiz length retrieved successfully:", length);
-            return length;
-        } catch (error) {
-            console.error("Error in get_quiz_length method:", error);
-            throw error;  // フロントエンドにエラーを伝えるために再スロー
-        }
-    }  
 
     async get_num_of_students() {
         return Number(await quiz.read.get_num_of_students());
@@ -858,4 +847,4 @@ class Contracts_MetaMask {
     }
 }
 
-export { Contracts_MetaMask, QuizStatuses };
+export { Contracts_MetaMask };
