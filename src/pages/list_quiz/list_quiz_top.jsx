@@ -17,11 +17,8 @@ function List_quiz_top(props) {
 
     // Contracts_MetaMaskのインスタンスを初期化
     useEffect(() => {
-        const initContract = () => {
-            const contractInstance = new Contracts_MetaMask();
-            setCont(contractInstance);
-        };
-        initContract();
+        const contractInstance = new Contracts_MetaMask();
+        setCont(contractInstance);
     }, []);
 
     // クイズの総数を取得する
@@ -44,6 +41,12 @@ function List_quiz_top(props) {
 
         fetchQuizLength();
     }, [cont]); // contが準備できたらデータを取得
+
+    // クイズリストをリセットする関数を追加
+    const resetQuizList = useCallback(() => {
+        Set_quiz_list([]); // クイズリストを空にリセット
+        now_numRef.current = quiz_sum; // クイズの総数にリセット
+    }, [quiz_sum]);
 
     // クイズリストをロードする関数を定義
     const loadMoreQuizzes = useCallback(async () => {
@@ -75,29 +78,18 @@ function List_quiz_top(props) {
         }
     }, [filter, add_num, cont, loading]);
 
-    // フィルタリング条件が変更された時にクイズリストを再取得
+    // フィルタリング条件が変更された時にクイズリストをリセットして再取得
     useEffect(() => {
+        resetQuizList();  // リストをリセット
         if (cont) {
-            loadMoreQuizzes();
+            loadMoreQuizzes(); // 新しいフィルタリング条件でクイズを取得
         }
-    }, [filter, loadMoreQuizzes, cont]);
+    }, [filter, loadMoreQuizzes, cont, resetQuizList]);
 
     // フィルタリングオプションが変更された時の処理
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
     };
-
-    // クイズリストをリセットする関数を追加
-    const resetQuizList = () => {
-        Set_quiz_list([]); // クイズリストを空にリセット
-        now_numRef.current = quiz_sum; // クイズの総数にリセット
-    };
-
-    // フィルタリング条件が変更された時にクイズリストをリセットして再取得
-    useEffect(() => {
-        resetQuizList();  // リストをリセット
-        loadMoreQuizzes(); // 新しいフィルタリング条件でクイズを取得
-    }, [filter, loadMoreQuizzes]);
 
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {

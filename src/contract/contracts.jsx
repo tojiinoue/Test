@@ -256,7 +256,7 @@ class Contracts_MetaMask {
                         approval = await token.read.allowance({ account, args: [account, quiz_address] });
                         console.log(approval);
                         if (Number(approval) >= Number(reward)) {
-                            hash = await this._addingReward(account, id, reward);
+                            hash = await this._adding_reward(account, id, reward);
                             if (hash) {
                                 res = await publicClient.waitForTransactionReceipt({ hash });
                             }
@@ -616,7 +616,6 @@ class Contracts_MetaMask {
     
                 // フィルタリング条件に基づいてクイズを追加
                 if (statusFilter === null || quizData.status === statusFilter) {
-                    res.push(quizData);
                     if (this.validateQuizData(quizData)) {
                         res.push(quizData);
                     }
