@@ -1,20 +1,19 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Contracts_MetaMask, QuizStatuses } from "../../contract/contracts";
 import Form from "react-bootstrap/Form";
-import { useState, useEffect, useRef, useCallback } from "react";
 import Simple_quiz from "./components/quiz_simple";
 import Quiz_list from "./components/quiz_list";
 
 function List_quiz_top(props) {
-    // Contracts_MetaMaskのインスタンスをステートとして管理
-    const [cont, setCont] = useState(null);
-    const targetRef = useRef(null);
-    const now_numRef = useRef(0);
+    const [cont, setCont] = useState(null); // Contracts_MetaMaskのインスタンスをステートとして管理
     const [quiz_sum, Set_quiz_sum] = useState(null);
     const [quiz_list, Set_quiz_list] = useState([]);
     const [add_num, Set_add_num] = useState(7);
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(false);  // ローディング状態を管理
     const [error, setError] = useState(null);       // エラーメッセージを管理
+    const targetRef = useRef(null);
+    const now_numRef = useRef(0);
 
     // Contracts_MetaMaskのインスタンスを初期化
     useEffect(() => {
@@ -27,37 +26,9 @@ function List_quiz_top(props) {
 
     // クイズの総数を取得する
     useEffect(() => {
+        if (!cont) return;  // contがまだ準備できていない場合は中断
+
         const fetchQuizLength = async () => {
-            if (!cont) return;  // contがまだ準備できていない場合は中断
-
-            useEffect(() => {
-                const initContract = () => {
-                    const contractInstance = new Contracts_MetaMask();
-                    setCont(contractInstance);
-                };
-                initContract();
-            }, []);
-            
-            // クイズの総数を取得する
-            useEffect(() => {
-                if (!cont) return;  // contがまだ準備できていない場合は中断
-    
-                const fetchQuizLength = async () => {
-                    try {
-                        console.log("Fetching quiz length...");
-                        const data = await cont.get_quiz_length();
-                        const now = parseInt(data);
-                        console.log("Quiz length obtained:", now);
-                        Set_quiz_sum(now);
-                        now_numRef.current = now;
-                    } catch (err) {
-                        console.error("Error fetching quiz length:", err);
-                        setError("クイズの総数を取得できませんでした。");
-                    }
-                };
-                fetchQuizLength();
-            }, [cont]); // contが準備できたらデータを取得
-
             try {
                 console.log("Fetching quiz length...");
                 const data = await cont.get_quiz_length();
@@ -72,12 +43,12 @@ function List_quiz_top(props) {
         };
 
         fetchQuizLength();
-    }, [cont]);
+    }, [cont]); // contが準備できたらデータを取得
 
     // クイズリストをロードする関数を定義
     const loadMoreQuizzes = useCallback(async () => {
         if (loading || !cont) return;  // ローディング中またはcontが準備できていない場合は中断
-        setLoading(true);     // ローディング状態を設定
+        setLoading(true);  // ローディング状態を設定
 
         try {
             const filterStatus = filter === 'all' ? null : parseInt(filter, 10); // フィルタリング条件を設定
@@ -115,18 +86,11 @@ function List_quiz_top(props) {
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
     };
-    
+
     // クイズリストをリセットする関数を追加
     const resetQuizList = () => {
         Set_quiz_list([]); // クイズリストを空にリセット
         now_numRef.current = quiz_sum; // クイズの総数にリセット
-    };
-
-    // クイズに回答後に一覧に戻る前にリセットを行う
-    const handleQuizAnswer = () => {
-        // クイズに回答する処理を実行
-        resetQuizList(); // クイズリストをリセット
-        // 一覧に戻る処理を追加
     };
 
     // フィルタリング条件が変更された時にクイズリストをリセットして再取得
