@@ -2,11 +2,13 @@ import { useEffect, useRef } from "react";
 import Simple_quiz from "./quiz_simple";
 
 function Quiz_list(props) {
-    const add_num = useRef(Math.floor(window.innerHeight / 100) + 2);  // 画面に表示する個数を計算
+    // 画面に表示するクイズの個数を計算
+    const add_num = useRef(Math.floor(window.innerHeight / 100) + 2);  
 
     // クイズのリストを取得して表示を管理
     const get_quiz_list = async (now) => {
-        const filterStatus = props.filter === 'all' ? null : parseInt(props.filter, 10); // フィルタリングの状態を数値に変換
+        // フィルタリングの状態を数値に変換
+        const filterStatus = props.filter === 'all' ? null : parseInt(props.filter, 10);
 
         let add_quiz_list = [];
         if (now - add_num.current < 0) {

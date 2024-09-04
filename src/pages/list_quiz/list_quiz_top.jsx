@@ -1,63 +1,61 @@
-import { Contracts_MetaMask } from "../../contract/contracts";
+// list_quiz_top.jsx
+
+import { Contracts_MetaMask, QuizStatuses } from "../../contract/contracts";
 import Form from "react-bootstrap/Form";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Simple_quiz from "./components/quiz_simple";
 import Quiz_list from "./components/quiz_list";
-import { Link } from "react-router-dom";
 
 function List_quiz_top(props) {
-    // クイズのコントラクト
     const cont = new Contracts_MetaMask();
-
-    const targetRef = useRef(null);  // スクロール監視のためのターゲット
-    const now_numRef = useRef(0);    // 現在表示しているクイズの個数を保持
-    const [quiz_sum, Set_quiz_sum] = useState(null);  // クイズの総数
-    const [quiz_list, Set_quiz_list] = useState([]);  // 表示するクイズのリスト
-    const [add_num, Set_add_num] = useState(7);       // 1回の更新で追加で表示するクイズの個数
-    const [filter, setFilter] = useState('all');      // フィルタリングの状態
+    const targetRef = useRef(null);
+    const now_numRef = useRef(0);
+    const [quiz_sum, Set_quiz_sum] = useState(null);
+    const [quiz_list, Set_quiz_list] = useState([]);
+    const [add_num, Set_add_num] = useState(7);
+    const [filter, setFilter] = useState('all');
 
     // クイズの総数を取得する
     useEffect(() => {
         cont.get_quiz_length().then((data) => {
             const now = parseInt(data);
             Set_quiz_sum(now);
-            now_numRef.current = now;  // 表示クイズ数を更新
+            now_numRef.current = now;
         });
     }, []);
+
+    // クイズリストをロードする関数を定義
+    const loadMoreQuizzes = useCallback(async () => {
+        const filterStatus = filter === 'all' ? null : parseInt(filter, 10); // フィルタリング条件を設定
+        const end = now_numRef.current;
+        const start = Math.max(0, end - add_num);
+
+        // contracts.jsxのget_quiz_listメソッドを呼び出し
+        const quizzes = await cont.get_quiz_list(start, end, filterStatus);
+        Set_quiz_list((prevList) => [...prevList, ...quizzes]);
+
+        now_numRef.current = start;
+    }, [filter, add_num, cont]);
 
     // フィルタリング条件が変更された時にクイズリストを再取得
     useEffect(() => {
         loadMoreQuizzes();
-    }, [filter]);
+    }, [filter, loadMoreQuizzes]);
 
     // フィルタリングオプションが変更された時の処理
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
     };
 
-    // クイズリストの取得および表示を管理
-    const loadMoreQuizzes = async () => {
-        const filterStatus = filter === 'all' ? null : parseInt(filter, 10);
-        const end = now_numRef.current;
-        const start = Math.max(0, end - add_num);  // 追加するクイズの開始位置を計算
-
-        // クイズを取得してリストに追加
-        const quizzes = await cont.get_quiz_list(start, end, filterStatus);
-        Set_quiz_list((prevList) => [...prevList, ...quizzes]);
-
-        now_numRef.current = start;  // 取得済みのクイズの個数を更新
-    };
-
-    // IntersectionObserverでターゲットがビューポートに入った時にクイズを追加で読み込む
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
                     console.log("Target div is visible on the screen!");
-                    loadMoreQuizzes();  // クイズをさらに取得
+                    loadMoreQuizzes();
                 }
             });
-        }, { threshold: 1.0 });
+        }, { threshold: 0.1 });
 
         if (targetRef.current) {
             observer.observe(targetRef.current);
@@ -68,12 +66,12 @@ function List_quiz_top(props) {
                 observer.unobserve(targetRef.current);
             }
         };
-    }, []);
+    }, [loadMoreQuizzes]);
 
     if (quiz_sum !== null) {
         return (
             <>
-                {/* 絞り込み機能 */}
+                {/* フィルタリング機能 */}
                 <Form.Select value={filter} onChange={handleFilterChange}>
                     <option value="all">全て</option>
                     <option value="0">未回答</option>

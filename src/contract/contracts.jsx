@@ -872,4 +872,4 @@ class Contracts_MetaMask {
     }
 }
 
-export { Contracts_MetaMask };
+export { Contracts_MetaMask, QuizStatuses };
