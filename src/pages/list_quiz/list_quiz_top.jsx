@@ -1,121 +1,63 @@
-import { Contracts_MetaMask, QuizStatuses } from "../../contract/contracts";
+import { Contracts_MetaMask } from "../../contract/contracts";
 import Form from "react-bootstrap/Form";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Simple_quiz from "./components/quiz_simple";
 import Quiz_list from "./components/quiz_list";
+import { Link } from "react-router-dom";
 
 function List_quiz_top(props) {
-    // Contracts_MetaMaskのインスタンスをステートとして管理
-    const [cont, setCont] = useState(null);
-    const targetRef = useRef(null);
-    const now_numRef = useRef(0);
-    const [quiz_sum, Set_quiz_sum] = useState(null);
-    const [quiz_list, Set_quiz_list] = useState([]);
-    const [add_num, Set_add_num] = useState(7);
-    const [filter, setFilter] = useState('all');
-    const [loading, setLoading] = useState(false);  // ローディング状態を管理
-    const [error, setError] = useState(null);       // エラーメッセージを管理
+    // クイズのコントラクト
+    const cont = new Contracts_MetaMask();
 
-    // Contracts_MetaMaskのインスタンスを初期化
-    useEffect(() => {
-        const initContract = () => {
-            const contractInstance = new Contracts_MetaMask();
-            setCont(contractInstance);
-        };
-        initContract();
-    }, []);
+    const targetRef = useRef(null);  // スクロール監視のためのターゲット
+    const now_numRef = useRef(0);    // 現在表示しているクイズの個数を保持
+    const [quiz_sum, Set_quiz_sum] = useState(null);  // クイズの総数
+    const [quiz_list, Set_quiz_list] = useState([]);  // 表示するクイズのリスト
+    const [add_num, Set_add_num] = useState(7);       // 1回の更新で追加で表示するクイズの個数
+    const [filter, setFilter] = useState('all');      // フィルタリングの状態
 
     // クイズの総数を取得する
     useEffect(() => {
-        const fetchQuizLength = async () => {
-            if (!cont) return;  // contがまだ準備できていない場合は中断
-
-            try {
-                console.log("Fetching quiz length...");
-                const data = await cont.get_quiz_length();
-                const now = parseInt(data);
-                console.log("Quiz length obtained:", now);
-                Set_quiz_sum(now);
-                now_numRef.current = now;
-            } catch (err) {
-                console.error("Error fetching quiz length:", err);
-                setError("クイズの総数を取得できませんでした。");
-            }
-        };
-
-        fetchQuizLength();
-    }, [cont]);
-
-    // クイズリストをロードする関数を定義
-    const loadMoreQuizzes = useCallback(async () => {
-        if (loading || !cont) return;  // ローディング中またはcontが準備できていない場合は中断
-        setLoading(true);     // ローディング状態を設定
-
-        try {
-            const filterStatus = filter === 'all' ? null : parseInt(filter, 10); // フィルタリング条件を設定
-            const end = now_numRef.current;
-            const start = Math.max(0, end - add_num);
-
-            // contracts.jsxのget_quiz_listメソッドを呼び出し
-            const quizzes = await cont.get_quiz_list(start, end, filterStatus);
-
-            // クイズデータの重複を削除
-            Set_quiz_list((prevList) => {
-                const newQuizzes = quizzes.filter(
-                    (quiz) => !prevList.some((prevQuiz) => prevQuiz.quiz_id === quiz.quiz_id)
-                );
-                return [...prevList, ...newQuizzes];
-            });
-
-            now_numRef.current = start;
-        } catch (err) {
-            console.error("Error loading quizzes:", err);
-            setError("クイズのリストを取得できませんでした。");
-        } finally {
-            setLoading(false);  // ローディング状態を解除
-        }
-    }, [filter, add_num, cont, loading]);
+        cont.get_quiz_length().then((data) => {
+            const now = parseInt(data);
+            Set_quiz_sum(now);
+            now_numRef.current = now;  // 表示クイズ数を更新
+        });
+    }, []);
 
     // フィルタリング条件が変更された時にクイズリストを再取得
     useEffect(() => {
-        if (cont) {
-            loadMoreQuizzes();
-        }
-    }, [filter, loadMoreQuizzes, cont]);
+        loadMoreQuizzes();
+    }, [filter]);
 
     // フィルタリングオプションが変更された時の処理
     const handleFilterChange = (event) => {
         setFilter(event.target.value);
     };
-    
-    // クイズリストをリセットする関数を追加
-    const resetQuizList = () => {
-        Set_quiz_list([]); // クイズリストを空にリセット
-        now_numRef.current = quiz_sum; // クイズの総数にリセット
+
+    // クイズリストの取得および表示を管理
+    const loadMoreQuizzes = async () => {
+        const filterStatus = filter === 'all' ? null : parseInt(filter, 10);
+        const end = now_numRef.current;
+        const start = Math.max(0, end - add_num);  // 追加するクイズの開始位置を計算
+
+        // クイズを取得してリストに追加
+        const quizzes = await cont.get_quiz_list(start, end, filterStatus);
+        Set_quiz_list((prevList) => [...prevList, ...quizzes]);
+
+        now_numRef.current = start;  // 取得済みのクイズの個数を更新
     };
 
-    // クイズに回答後に一覧に戻る前にリセットを行う
-    const handleQuizAnswer = () => {
-        // クイズに回答する処理を実行
-        resetQuizList(); // クイズリストをリセット
-        // 一覧に戻る処理を追加
-    };
-
-    // フィルタリング条件が変更された時にクイズリストをリセットして再取得
-    useEffect(() => {
-        resetQuizList();  // リストをリセット
-        loadMoreQuizzes(); // 新しいフィルタリング条件でクイズを取得
-    }, [filter, loadMoreQuizzes]);
-
+    // IntersectionObserverでターゲットがビューポートに入った時にクイズを追加で読み込む
     useEffect(() => {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach((entry) => {
                 if (entry.isIntersecting) {
                     console.log("Target div is visible on the screen!");
-                    loadMoreQuizzes();
+                    loadMoreQuizzes();  // クイズをさらに取得
                 }
             });
-        }, { threshold: 0.1 });
+        }, { threshold: 1.0 });
 
         if (targetRef.current) {
             observer.observe(targetRef.current);
@@ -126,16 +68,12 @@ function List_quiz_top(props) {
                 observer.unobserve(targetRef.current);
             }
         };
-    }, [loadMoreQuizzes]);
-
-    if (error) {
-        return <div>{error}</div>;  // エラーメッセージを表示
-    }
+    }, []);
 
     if (quiz_sum !== null) {
         return (
             <>
-                {/* フィルタリング機能 */}
+                {/* 絞り込み機能 */}
                 <Form.Select value={filter} onChange={handleFilterChange}>
                     <option value="all">全て</option>
                     <option value="0">未回答</option>
@@ -161,7 +99,6 @@ function List_quiz_top(props) {
                 {quiz_list.map((quiz, index) => (
                     <Simple_quiz key={index} quiz={quiz} />
                 ))}
-                {loading && <div>読み込み中...</div>}
                 <div ref={targetRef}>now_loading</div>
             </>
         );
