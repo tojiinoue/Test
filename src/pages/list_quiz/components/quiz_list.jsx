@@ -34,13 +34,23 @@ function Quiz_list(props) {
 
     // クイズリストを取得が必要になった時に呼び出す
     useEffect(() => {
-        if (props.cont) { // contが準備できている場合のみ実行
-            // クイズリストをリセットして再取得
+        if (props.cont && props.quiz_sum > 0) {  // contが準備できていて、クイズ総数が正しい場合のみ実行
             props.Set_quiz_list([]);
             props.now_numRef.current = props.quiz_sum; // クイズの総数にリセット
             get_quiz_list(props.now_numRef.current);
+        } else if (props.quiz_sum === 0) {
+            props.Set_quiz_list([]);
+            console.log("クイズが存在しません。");
         }
-    }, [props.filter, props.cont, props.quiz_sum, get_quiz_list]); // 依存関係を追加
+    }, [props.filter, props.cont, props.quiz_sum]);  // フィルタリングの変更時やcontが変わった時にもリストを更新
+
+    useEffect(() => {
+        if (props.cont) {  
+            props.Set_quiz_list([]);
+            props.now_numRef.current = props.quiz_sum; 
+            get_quiz_list(props.now_numRef.current);
+        }
+    }, [props.filter, props.cont]);  
 
     return null; // このコンポーネント自体は何もレンダリングしない
 }

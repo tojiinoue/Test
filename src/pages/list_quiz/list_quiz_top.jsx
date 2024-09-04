@@ -43,36 +43,45 @@ function List_quiz_top(props) {
     }, [cont]); // contが準備できたらデータを取得
 
     // クイズリストをリセットする関数を追加
-    const resetQuizList = useCallback(() => {
+    const resetQuizList = () => {
         Set_quiz_list([]); // クイズリストを空にリセット
+    
+        if (quiz_sum === 0 || quiz_sum === null) {
+            setError("クイズが存在しません。");
+            return;
+        }
+    
         now_numRef.current = quiz_sum; // クイズの総数にリセット
-    }, [quiz_sum]);
+    };
 
     // クイズリストをロードする関数を定義
     const loadMoreQuizzes = useCallback(async () => {
         if (loading || !cont) return;  // ローディング中またはcontが準備できていない場合は中断
         setLoading(true);  // ローディング状態を設定
-
+    
         try {
             const filterStatus = filter === 'all' ? null : parseInt(filter, 10); // フィルタリング条件を設定
             const end = now_numRef.current;
             const start = Math.max(0, end - add_num);
-
-            // contracts.jsxのget_quiz_listメソッドを呼び出し
+    
             const quizzes = await cont.get_quiz_list(start, end, filterStatus);
-
-            // クイズデータの重複を削除
+    
+            if (!quizzes || quizzes.length === 0) {
+                setError("該当するクイズが見つかりませんでした。別のフィルターを試してください。");
+                return;
+            }
+    
             Set_quiz_list((prevList) => {
                 const newQuizzes = quizzes.filter(
                     (quiz) => !prevList.some((prevQuiz) => prevQuiz.quiz_id === quiz.quiz_id)
                 );
                 return [...prevList, ...newQuizzes];
             });
-
+    
             now_numRef.current = start;
         } catch (err) {
             console.error("Error loading quizzes:", err);
-            setError("クイズのリストを取得できませんでした。");
+            setError("クイズのリストを取得できませんでした。サーバーの問題の可能性があります。");
         } finally {
             setLoading(false);  // ローディング状態を解除
         }

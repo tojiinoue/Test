@@ -610,15 +610,12 @@ class Contracts_MetaMask {
         let account = await this.get_address();
     
         try {
-            // クイズリストを取得するループ
             for (let i = start; i < end; i++) {
                 let quizData = await quiz.read.get_quiz_simple({ account, args: [i] });
     
                 // フィルタリング条件に基づいてクイズを追加
-                if (statusFilter === null || quizData.status === statusFilter) {
-                    if (this.validateQuizData(quizData)) {
-                        res.push(quizData);
-                    }
+                if (statusFilter === null || Number(quizData.state) === statusFilter) {
+                    res.push(quizData);
                 }
             }
         } catch (err) {
