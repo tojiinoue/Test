@@ -43,42 +43,9 @@ const QuizStatuses = {
     CORRECT: 2          // 正解
 };
 
-// フィルタリング条件を設定する変数
-let quizStatus = QuizStatuses.ALL; // 初期値は全てのクイズを表示
-
-// フィルタリング条件を動的に変更する関数
-function updateQuizStatus(newStatus) {
-    quizStatus = newStatus;
-    console.log(`Quiz status updated to: ${quizStatus}`);
-    // 必要に応じて、クイズのリストを再取得するなどの処理を行う
-    // 例: fetchQuizzes();
-}
-
-// イベントリスナーを追加して、ユーザーのフィルタリングオプションの変更を監視
-document.getElementById('filterDropdown').addEventListener('change', (event) => {
-    const selectedStatus = event.target.value;
-    updateQuizStatus(QuizStatuses[selectedStatus.toUpperCase()]);
-});
-
-if (window.ethereum) {
-    window.ethereum.on("chainChanged", () => {
-        window.location.reload();
-    });
-    window.ethereum.on("accountsChanged", () => {
-        window.location.reload();
-    });
-}
-
+// 配列を指定されたサイズで分割する関数
 const sliceByNumber = (array, number) => {
-    // 元の配列(今回で言うと変数arrayを指します)を基に、分割して生成する配列の個数を取得する処理です。
-    // 今回は元の配列の要素数が10個、分割して生成する配列は2つの要素を持つことを期待しています。
-    // 上記のことから今回は、元の配列から5つの配列に分割されることになります。
     const length = Math.ceil(array.length / number);
-
-    // new Arrayの引数に上記で取得した配列の個数を渡します。これで配列の中に5つの配列が生成されます。
-    // 5つの配列分だけループ処理(mapメソッド)をします。map処理の中でsliceメソッドを使用して、元の配列から新しい配列を作成して返却します。
-    // sliceメソッドの中では、要素数2つの配列を生成します。
-    // fillメソッドはインデックスのキーを生成するために使用しています。もし使用しない場合はmapメソッドはindexがないため、mapメソッドが機能しません。
     return new Array(length)
         .fill()
         .map((_, i) => array.slice(i * number, (i + 1) * number));
@@ -546,6 +513,7 @@ class Contracts_MetaMask {
                     let res = await publicClient.waitForTransactionReceipt({ hash });
                     console.log(res);
                     //document.location.href = "/user_page/" + account;
+                    await this.get_quiz_list(0, 10); // 必要なクイズの範囲を再取得井上追加
                     document.location.href = homeUrl + "/list_quiz";
                 }
                 console.log("create_answer_cont");
@@ -649,6 +617,9 @@ class Contracts_MetaMask {
                 // フィルタリング条件に基づいてクイズを追加
                 if (statusFilter === null || quizData.status === statusFilter) {
                     res.push(quizData);
+                    if (this.validateQuizData(quizData)) {
+                        res.push(quizData);
+                    }
                 }
             }
         } catch (err) {
@@ -656,11 +627,30 @@ class Contracts_MetaMask {
         }
         return res;
     }
+
+    // クイズデータのバリデーション関数を追加
+    validateQuizData(quizData) {
+        // 必要なフィールドが揃っているか、型が正しいかを確認
+        if (!quizData.quiz_id || typeof quizData.quiz_id !== 'number') return false;
+        if (!quizData.title || typeof quizData.title !== 'string') return false;
+        if (isNaN(quizData.reward)) return false;
+        // 他のフィールドもチェック
+        // ...
+        return true;
+    }
     
     
     async get_quiz_length() {
-        return await quiz.read.get_quiz_length();
-    }    
+        try {
+            console.log("Attempting to fetch quiz length from contract...");
+            const length = await quiz.read.get_quiz_length();  // クエリが成功するかどうかを確認
+            console.log("Quiz length retrieved successfully:", length);
+            return length;
+        } catch (error) {
+            console.error("Error in get_quiz_length method:", error);
+            throw error;  // フロントエンドにエラーを伝えるために再スロー
+        }
+    }  
 
     async get_num_of_students() {
         return Number(await quiz.read.get_num_of_students());

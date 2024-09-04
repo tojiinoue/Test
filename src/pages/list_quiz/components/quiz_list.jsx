@@ -7,6 +7,8 @@ function Quiz_list(props) {
 
     // クイズのリストを取得して表示を管理
     const get_quiz_list = async (now) => {
+        if (!props.cont) return;  // contがまだ準備できていない場合は中断
+
         // フィルタリングの状態を数値に変換
         const filterStatus = props.filter === 'all' ? null : parseInt(props.filter, 10);
 
@@ -21,15 +23,24 @@ function Quiz_list(props) {
             props.now_numRef.current = now - add_num.current;  // 次回の開始位置を更新
         }
 
+        // 重複クイズの削除
+        const uniqueQuizzes = add_quiz_list.filter(
+            (quiz) => !props.quiz_list.some((existingQuiz) => existingQuiz.quiz_id === quiz.quiz_id)
+        );
+        
         // クイズリストを更新
-        const now_quiz_list = add_quiz_list.map((quiz) => <Simple_quiz quiz={quiz} key={quiz.id} />);
-        props.Set_quiz_list((prevList) => [...prevList, ...now_quiz_list]);
+        props.Set_quiz_list((prevList) => [...prevList, ...uniqueQuizzes]);
     };
 
     // クイズリストの取得が必要になった時に呼び出す
     useEffect(() => {
-        get_quiz_list(props.now_numRef.current);
-    }, [props.filter]);  // フィルタリングの変更時にもリストを更新
+        if (props.cont) {  // contが準備できている場合のみ実行
+            // クイズリストをリセット
+            props.Set_quiz_list([]);
+            props.now_numRef.current = props.quiz_sum; // クイズの総数にリセット
+            get_quiz_list(props.now_numRef.current);
+        }
+    }, [props.filter, props.cont]);  // フィルタリングの変更時やcontが変わった時にもリストを更新
 
     return null;  // このコンポーネント自体は何もレンダリングしない
 }
