@@ -5,7 +5,7 @@
     padding: 24px;
     word-break: break-all;
     margin: 20px 20px;
-    min-height: "100px";
+    min-height: 100px;
   }
 }
 @media screen and (min-width: 601px) {
@@ -16,7 +16,6 @@
     word-break: break-all;
     margin: 20px 20px;
     min-height: "100px";
-
     width: 70%;
 
     margin: 10px auto;
@@ -25,3 +24,7 @@
 .border {
   border: 1px solid red;
 }
+
+.quiz_card.bg-blue {
+  background: #add8e6 !important; /* 薄い青 */
+}/*親クラスとつなげて子クラスを指定することで優先表示*/
