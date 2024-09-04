@@ -30,6 +30,34 @@ function List_quiz_top(props) {
         const fetchQuizLength = async () => {
             if (!cont) return;  // contがまだ準備できていない場合は中断
 
+            useEffect(() => {
+                const initContract = () => {
+                    const contractInstance = new Contracts_MetaMask();
+                    setCont(contractInstance);
+                };
+                initContract();
+            }, []);
+            
+            // クイズの総数を取得する
+            useEffect(() => {
+                if (!cont) return;  // contがまだ準備できていない場合は中断
+    
+                const fetchQuizLength = async () => {
+                    try {
+                        console.log("Fetching quiz length...");
+                        const data = await cont.get_quiz_length();
+                        const now = parseInt(data);
+                        console.log("Quiz length obtained:", now);
+                        Set_quiz_sum(now);
+                        now_numRef.current = now;
+                    } catch (err) {
+                        console.error("Error fetching quiz length:", err);
+                        setError("クイズの総数を取得できませんでした。");
+                    }
+                };
+                fetchQuizLength();
+            }, [cont]); // contが準備できたらデータを取得
+
             try {
                 console.log("Fetching quiz length...");
                 const data = await cont.get_quiz_length();
