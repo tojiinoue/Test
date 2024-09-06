@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
+import Modal from "./Modal";
 import { Link } from "react-router-dom";
 import "./quiz_simple.css";
 
-// クイズの残り時間を計算する関数
 function Time_diff(props) {
     function convertSecondsToHours(secondsLimit, secondsStart) {
         let isBeforeStartline = false;
@@ -49,7 +50,11 @@ function Time_diff(props) {
         }
     }
 
-    return <div>{convertSecondsToHours(parseInt(props.limit), parseInt(props.start))}</div>;
+    return (
+        <div>
+            {convertSecondsToHours(parseInt(props.limit), parseInt(props.start))}
+        </div>
+    );
 }
 
 function Simple_quiz(props) {
@@ -67,31 +72,26 @@ function Simple_quiz(props) {
         }
     }, [props.quiz]);
 
-    const cardStatusClass = Number(props.quiz[10]) === 1 ? "bg-blue" : "";
+    const cardStatusClass = Number(props.quiz[10]) === 0 ? 'bg-blue' : ''; 
+    const search = useLocation().search;
 
     // クイズの状態を表示する部分を修正
     const quizStatus =
-        Number(props.quiz[10]) === 1
+        Number(props.quiz[10]) === 0
             ? "未回答"
-            : Number(props.quiz[10]) === 2
+            : Number(props.quiz[10]) === 1
             ? "不正解"
-            : Number(props.quiz[10]) === 3
+            : Number(props.quiz[10]) === 2
             ? "正解"
-            : Number(props.quiz[10]) === 4
+            : Number(props.quiz[10]) === 3
             ? "回答済み"
             : "";
 
     return (
         <>
             <div onClick={() => setShow(true)}>
-                <div className={`quiz_card ${cardStatusClass} ${isPayment ? "border border-danger" : ""} ${isReward ? "border border-primary" : ""}`}>
-                    <Link
-                        to={{
-                            pathname: "/answer_quiz/" + Number(props.quiz[0]),
-                            state: { back_page: 0 },
-                        }}
-                        style={{ color: "black", textDecoration: "none" }}
-                    >
+                <div className={`quiz_card ${cardStatusClass} ${isPayment ? 'border border-danger' : ''} ${isReward ? 'border border-primary' : ''}`}>
+                    <Link to={{ pathname: "/answer_quiz/" + Number(props.quiz[0]), state: { back_page: 0 } }} style={{ color: "black", textDecoration: "none" }}>
                         <div className="row quiz_card_1">
                             <div className="col-2">
                                 <img src={props.quiz[4]} className="img-fluid" alt="Quiz Thumbnail" />
@@ -110,7 +110,7 @@ function Simple_quiz(props) {
                                     <div className="col-3">
                                         <div className="col">報酬</div>
                                         <div className="col" style={{ textAlign: "center" }}>
-                                            {Number(props.quiz[7]) / 10 ** 18} FLT
+                                            {Number(props.quiz[7]) / (10 ** 18)} FLT
                                         </div>
                                     </div>
                                     <div className="col-3">

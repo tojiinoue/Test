@@ -436,6 +436,26 @@ class Contracts_MetaMask {
         }
     }
 
+    async create_quizzes(quizzes) {
+        const quizData = quizzes.map(quiz => [
+            quiz.title,
+            quiz.explanation,
+            quiz.thumbnail_url,
+            quiz.content,
+            quiz.answer_type,
+            quiz.answer_data,
+            quiz.correct,
+            Math.floor(new Date(quiz.reply_startline).getTime() / 1000),
+            Math.floor(new Date(quiz.reply_deadline).getTime() / 1000),
+            quiz.reward,
+            quiz.correct_limit
+        ]);
+
+        // 一括投稿用のスマートコントラクト関数を呼び出し
+        const tx = await this.contract.methods.create_quizzes(quizData).send({ from: this.account });
+        return tx;
+    }
+
     async edit_quiz(id, owner, title, explanation, thumbnail_url, content, reply_startline, reply_deadline, setShow) {
         setShow(true);
         //console.log([id, owner, title, explanation, thumbnail_url, content, reply_startline, reply_deadline]);
