@@ -612,20 +612,23 @@ class Contracts_MetaMask {
     //startからendまでのクイズを取得
 
     async get_quiz_list(start, end, statusFilter = 0) {
-        //取得したクイズを格納する配列
-        let res = [];
-        let account = await this.get_address();
-    
-        console.log(start, end, statusFilter);
-        if (start <= end) {
-            // コントラクトからクイズを取得
-            res = await quiz.read.get_quiz_list({ account, args: [start, end, statusFilter] });
-        } else {
-            // クイズを逆方向から取得
-            res = await quiz.read.get_quiz_list({ account, args: [end, start, statusFilter] });
+        try {
+            let account = await this.get_address();
+            console.log(`Fetching quizzes from ${start} to ${end} with status ${statusFilter}`);
+            
+            let res;
+            if (start <= end) {
+                res = await quiz.read.get_quiz_list({ account, args: [start, end, statusFilter] });
+            } else {
+                res = await quiz.read.get_quiz_list({ account, args: [end, start, statusFilter] });
+            }
+            
+            console.log('Fetched quizzes:', res); // デバッグ用
+            return res;
+        } catch (err) {
+            console.error('Error fetching quiz list:', err);
+            return [];
         }
-        console.log(res);
-        return res;
     }
 
     async get_quiz_length() {

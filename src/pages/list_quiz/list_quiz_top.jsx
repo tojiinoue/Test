@@ -31,11 +31,19 @@ function List_quiz_top(props) {
     };
 
     useEffect(() => {
-        // クイズ数を取得し、リセット
+        // クイズ数を取得
         cont.get_quiz_length().then((data) => {
             let now = parseInt(Number(data));
             Set_quiz_sum(now);
             now_numRef.current = now;
+    
+            // クイズリストを取得
+            cont.get_quiz_list(0, now, selectedStatus).then((quizzes) => {
+                console.log('Fetched quizzes:', quizzes); // デバッグ用
+                Set_quiz_list(quizzes);
+            }).catch((err) => {
+                console.error('Error fetching quizzes:', err); // デバッグ用
+            });
         });
     }, [selectedStatus]); // selectedStatus の変更時にもリストを再取得
 
@@ -48,11 +56,11 @@ function List_quiz_top(props) {
                 value={selectedStatus}
                 style={{ marginBottom: "20px" }}
             >
-                <option value={0}>全て</option>
-                <option value={1}>未回答</option>
-                <option value={2}>不正解</option>
-                <option value={3}>正解</option>
-                <option value={4}>回答済み</option>
+                <option value={4}>全て</option>
+                <option value={0}>未回答</option>
+                <option value={1}>不正解</option>
+                <option value={2}>正解</option>
+                <option value={3}>回答済み</option>
             </Form.Select>
 
             {/* クイズリスト表示部分 */}

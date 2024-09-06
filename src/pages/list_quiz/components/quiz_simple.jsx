@@ -67,17 +67,17 @@ function Simple_quiz(props) {
         }
     }, [props.quiz]);
 
-    const cardStatusClass = Number(props.quiz[10]) === 0 ? "bg-blue" : "";
+    const cardStatusClass = Number(props.quiz[10]) === 1 ? "bg-blue" : "";
 
     // クイズの状態を表示する部分を修正
     const quizStatus =
-        Number(props.quiz[10]) === 0
+        Number(props.quiz[10]) === 1
             ? "未回答"
-            : Number(props.quiz[10]) === 1
-            ? "不正解"
             : Number(props.quiz[10]) === 2
-            ? "正解"
+            ? "不正解"
             : Number(props.quiz[10]) === 3
+            ? "正解"
+            : Number(props.quiz[10]) === 4
             ? "回答済み"
             : "";
 

@@ -10,7 +10,7 @@ const rpc = "https://rpc-amoy.polygon.technology/"; // (required for Ethereum) J
 //const quiz_address = "0x681913855E68BBF88962A40E4f3f48cB78fc9603";
 //const quiz_address = "0x0427f1452FDB4372C007f4a272cB3c05D73355a0";20240828コメントアウト
 //const quiz_address = "0x0427f1452FDB4372C007f4a272cB3c05D73355a0";
-const quiz_address = "0x57C0A656F44730FF41176fEF79e9148A010aC3a0";//修正版20240906
+const quiz_address = "0x7FeE98Dd60b530246578A61c3662D01B46eCBAA1";//修正版20240906
 const token_address = "0x4147aE2cEC45cFb2B9a9A3aE320C855DD767C2f8";
 
 export { chainId, rpc, quiz_address, token_address };
