@@ -6,21 +6,22 @@ import Answer_select from "./components/answer_select";
 import Button from "react-bootstrap/Button";
 import "react-datepicker/dist/react-datepicker.css";
 import Wait_Modal from "../../contract/wait_Modal";
-import CreateBulkQuizzes from "./components/CreateBulkQuizzes"; // 適切な相対パスに変更
 
 const { ethereum } = window;
 const mkdStr = "";
 
 function Create_quiz() {
-    const [showBulkForm, setShowBulkForm] = useState(false); // 一括投稿フォームを表示するかどうかの状態を追加
-    const [useing_address, Set_useing_address] = useState(null);
-    const [title, setTitle] = useState("");
-    const [explanation, setExplanation] = useState("");
-    const [thumbnail_url, setThumbnail_url] = useState("");
-    const [content, setContent] = useState("");
-    const [answer_type, setAnswer_type] = useState(0);
-    const [answer_data, setAnswer_data] = useState([]);
-    const [correct, setCorrect] = useState("");
+    const [mainTitle, setMainTitle] = useState(""); // 大枠のタイトル
+    const [quizzes, setQuizzes] = useState([{ // 初期状態として1つのクイズフォームを設定
+        title: "",
+        explanation: "",
+        thumbnail_url: "",
+        content: "",
+        answer_type: 0,
+        answer_data: [],
+        correct: ""
+    }]);
+
     const [reply_startline, setReply_startline] = useState(
         new Date()
             .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
@@ -29,176 +30,123 @@ function Create_quiz() {
     );
     const [reply_deadline, setReply_deadline] = useState(getLocalizedDateTimeString(addDays(new Date(), 1)));
     const [reward, setReward] = useState(0);
-
     let Contract = new Contracts_MetaMask();
-
     const [correct_limit, setCorrect_limit] = useState(null);
-    const [state, setState] = useState("Null");
-    const [now, setnow] = useState(null);
     const [show, setShow] = useState(false);
 
-    const convertFullWidthNumbersToHalf = (() => {
-        // 全角数字と半角数字の差分を計算
-        const diff = "０".charCodeAt(0) - "0".charCodeAt(0);
-
-        // 置換関数を返す
-        return text => text.replace(
-            /[０-９]/g
-            , m => String.fromCharCode(m.charCodeAt(0) - diff)
-        );
-    })();
-
-    const create_quiz = async () => {
-        //console.log(title, explanation, thumbnail_url, content, answer_data, correct, reply_startline, reply_deadline, reward, correct_limit);
-
-        if (correct !== "") {
-            console.log(new Date(reply_startline).getTime(), new Date(reply_deadline).getTime());
-            Contract.create_quiz(title, explanation, thumbnail_url, content, answer_type, answer_data, convertFullWidthNumbersToHalf(correct), reply_startline, reply_deadline, reward, correct_limit, setShow);
-        } else {
-            alert("正解を入力してください");
-        }
+    const addQuizForm = () => {
+        setQuizzes([...quizzes, { title: "", explanation: "", thumbnail_url: "", content: "", answer_type: 0, answer_data: [], correct: "" }]);
     };
 
+    const handleQuizChange = (index, field, value) => {
+        const updatedQuizzes = quizzes.map((quiz, i) => i === index ? { ...quiz, [field]: value } : quiz);
+        setQuizzes(updatedQuizzes);
+    };
 
+    const create_quizzes = async () => {
+        if (mainTitle.trim() === "") {
+            alert("大枠のタイトルを入力してください");
+            return;
+        }
 
-    function getLocalizedDateTimeString(now = new Date()) {
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, "0");
-        const day = String(now.getDate()).padStart(2, "0");
-        const hours = String(now.getHours()).padStart(2, "0");
-        const minutes = String(now.getMinutes()).padStart(2, "0");
+        const isValid = quizzes.every(quiz => quiz.correct !== "");
+        if (!isValid) {
+            alert("すべてのクイズに正解を入力してください");
+            return;
+        }
 
-        const formatter = new Intl.DateTimeFormat("ja-JP", {
-            timeZone: "Asia/Tokyo",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit",
-            hour12: false,
-        });
+        // 一括でクイズを作成するロジック
+        await Contract.create_bulk_quizzes(
+            mainTitle, // 大枠のタイトルを追加
+            quizzes.map(quiz => quiz.title),
+            quizzes.map(quiz => quiz.explanation),
+            quizzes.map(quiz => quiz.thumbnail_url),
+            quizzes.map(quiz => quiz.content),
+            quizzes.map(quiz => quiz.answer_type),
+            quizzes.map(quiz => quiz.answer_data.toString()),
+            quizzes.map(quiz => quiz.correct),
+            reply_startline,
+            reply_deadline,
+            reward,
+            correct_limit,
+            setShow
+        );
+    };
 
-        const localizedDateTimeString = formatter
-            .format(now)
-            .replace(/\u200E|\u200F/g, "")
-            .replace(/\//g, "-")
-            .replace(/ /, "T");
-
-        return localizedDateTimeString;
-    }
-    function addDays(date, days) {
-        date.setDate(date.getDate() + days);
-        return date;
-    }
-
-    //初回のみ実行
     useEffect(() => {
-        // let now = new Date();
-        // const diff_time = new Date(now + 100);
-        // setReply_deadline(addDays(now, 5));
         async function get_contract() {
             setCorrect_limit((await Contract.get_num_of_students()) + 30);
         }
         get_contract();
-        setnow(getLocalizedDateTimeString());
-        // console.log(now);
-        // console.log(new Date().toISOString().slice(0, 16));
     }, []);
-    console.log(reply_deadline);
-    console.log(reply_startline);
 
     return (
         <div>
             <div className="row">
                 <div className="col-2" />
                 <div className="col-8">
-                    {!showBulkForm ? (
-                        <>
-                            {/* 通常のクイズ作成フォーム */}
+                    <Form>
+                        {/* 大枠のタイトル入力欄 */}
+                        <Form.Group className="mb-3" controlId="main_title" style={{ textAlign: "left" }}>
+                            <Form.Label>クイズセットの大枠タイトル</Form.Label>
+                            <Form.Control type="text" placeholder="Enter Main Title" value={mainTitle} onChange={(e) => setMainTitle(e.target.value)} />
+                        </Form.Group>
+                    </Form>
+
+                    {quizzes.map((quiz, index) => (
+                        <div key={index}>
                             <Form>
-                                <Form.Group className="mb-3" controlId="form_titile" style={{ textAlign: "left" }}>
+                                <Form.Group className="mb-3" controlId={`form_title_${index}`} style={{ textAlign: "left" }}>
                                     <Form.Label>タイトル</Form.Label>
-                                    <Form.Control type="text" placeholder="Enter Title" value={title} onChange={(event) => setTitle(event.target.value)} />
+                                    <Form.Control type="text" placeholder="Enter Title" value={quiz.title} onChange={(e) => handleQuizChange(index, "title", e.target.value)} />
                                 </Form.Group>
                             </Form>
                             <Form.Group className="mb-3" style={{ textAlign: "left" }}>
                                 <Form.Label>説明</Form.Label>
-                                <Form.Control as="textarea" rows={explanation.split("\n").length + 3} value={explanation} onChange={(event) => setExplanation(event.target.value)} />
+                                <Form.Control as="textarea" rows={quiz.explanation.split("\n").length + 3} value={quiz.explanation} onChange={(e) => handleQuizChange(index, "explanation", e.target.value)} />
                             </Form.Group>
 
                             <Form.Group className="mb-3" style={{ textAlign: "left" }}>
                                 <Form.Label>サムネイル</Form.Label>
-                                <Form.Control type="url" value={thumbnail_url} onChange={(event) => setThumbnail_url(event.target.value)} />
+                                <Form.Control type="url" value={quiz.thumbnail_url} onChange={(e) => handleQuizChange(index, "thumbnail_url", e.target.value)} />
                             </Form.Group>
-                            <img src={thumbnail_url} width="200" />
+                            <img src={quiz.thumbnail_url} width="200" />
                             <br />
 
                             <Form.Group className="mb-3" data-color-mode="light" style={{ textAlign: "left" }}>
                                 <Form.Label>内容</Form.Label>
-                                <MDEditor height={500} value={content} onChange={setContent} />
+                                <MDEditor height={500} value={quiz.content} onChange={(value) => handleQuizChange(index, "content", value)} />
                             </Form.Group>
 
-                            {/*<Form.Group className="mb-3" style={{ textAlign: "left" }}>
-                                <Form.Label>選択肢(正解の回答にチェックを入れてください)</Form.Label><br />
-                                <Answer_area1 name={"回答の追加"} variable={answer_data} variable1={correct} set={setAnswer_data} set1={setCorrect}/>
-                            </Form.Group> */}
-                            <Answer_select name={"回答の追加"} variable={answer_data} variable1={correct} set={setAnswer_data} set1={setCorrect} setAnswer_type={setAnswer_type} answer_type={answer_type} />
+                            <Answer_select name={"回答の追加"} variable={quiz.answer_data} variable1={quiz.correct} set={(data) => handleQuizChange(index, "answer_data", data)} set1={(data) => handleQuizChange(index, "correct", data)} setAnswer_type={(type) => handleQuizChange(index, "answer_type", type)} answer_type={quiz.answer_type} />
+                        </div>
+                    ))}
 
-                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
-                                <Form.Label>回答開始日時</Form.Label>
-                                <Form.Control
-                                    type="datetime-local"
-                                    defaultValue={now}
-                                    //value={reply_deadline}
-                                    min={now}
-                                    onChange={(event) => setReply_startline(new Date(event.target.value))}
-                                />
-                            </Form.Group>
+                    <Button variant="secondary" onClick={addQuizForm}>クイズを追加する</Button>
 
-                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
-                                <Form.Label>回答締切日時</Form.Label>
-                                <Form.Control
-                                    type="datetime-local"
-                                    defaultValue={reply_deadline}
-                                    //value={reply_deadline}
-                                    min={now}
-                                    onChange={(event) => setReply_deadline(new Date(event.target.value))}
-                                />
-                            </Form.Group>
-                            {/*
-                            <div className="row">
+                    <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                        <Form.Label>回答開始日時</Form.Label>
+                        <Form.Control
+                            type="datetime-local"
+                            value={reply_startline}
+                            onChange={(event) => setReply_startline(event.target.value)}
+                        />
+                    </Form.Group>
 
-                                <Form.Group className="mb-3 col-4" style={{ textAlign: "left" }}>
-                                    <Form.Label>報酬</Form.Label>
-                                    <Form.Control type="number" min={1} step={1} value={reward} onChange={(event) => setReward(parseInt(event.target.value))} />
-                                </Form.Group>
-                                <div className="col-1" />
+                    <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                        <Form.Label>回答締切日時</Form.Label>
+                        <Form.Control
+                            type="datetime-local"
+                            value={reply_deadline}
+                            onChange={(event) => setReply_deadline(event.target.value)}
+                        />
+                    </Form.Group>
 
-                                <Form.Group className="mb-3 col-4" style={{ textAlign: "left" }}>
-                                    <Form.Label>正解の上限</Form.Label>
-                                    <Form.Control type="number" min={1} step={1} value={correct_limit} onChange={(event) => setCorrect_limit(parseInt(event.target.value))} />
-                                </Form.Group>
-                            </div>
-                            */}
-                                <Button variant="primary" onClick={() => create_quiz()} style={{ marginTop: "20px" }}>
-                                    クイズを作成
-                                </Button>
-
-                                {/* 一括投稿フォームの表示を切り替えるボタン */}
-                                <Button variant="secondary" onClick={() => setShowBulkForm(true)} style={{ marginTop: "20px", marginLeft: "10px" }}>
-                                    一括投稿フォームを開く
-                                </Button>
-                            </>
-                        ) : (
-                            <>
-                                {/* 一括投稿フォーム */}
-                                <CreateBulkQuizzes />
-                                {/* 通常のクイズ作成フォームに戻るボタン */}
-                                <Button variant="secondary" onClick={() => setShowBulkForm(false)} style={{ marginTop: "20px" }}>
-                                    通常のクイズ作成フォームに戻る
-                                </Button>
-                            </>
-                        )}
+                    <div style={{ textAlign: "right" }}>
+                        <Button variant="primary" onClick={create_quizzes} style={{ marginTop: "20px" }}>
+                            クイズを作成
+                        </Button>
+                    </div>
                 </div>
                 <div className="col-2" />
             </div>
