@@ -10,6 +10,7 @@ import Wait_Modal from "../../contract/wait_Modal";
 const { ethereum } = window;
 const mkdStr = "";
 
+// 未定義の関数を追加
 function getLocalizedDateTimeString(now = new Date()) {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
@@ -72,6 +73,10 @@ function Create_quiz() {
     const handleQuizChange = (index, field, value) => {
         const updatedQuizzes = quizzes.map((quiz, i) => i === index ? { ...quiz, [field]: value } : quiz);
         setQuizzes(updatedQuizzes);
+    };
+
+    const deleteQuizForm = (index) => {
+        setQuizzes(quizzes.filter((_, i) => i !== index)); // 指定されたインデックスのクイズを削除
     };
 
     const create_quizzes = async () => {
@@ -150,6 +155,9 @@ function Create_quiz() {
                             </Form.Group>
 
                             <Answer_select name={"回答の追加"} variable={quiz.answer_data} variable1={quiz.correct} set={(data) => handleQuizChange(index, "answer_data", data)} set1={(data) => handleQuizChange(index, "correct", data)} setAnswer_type={(type) => handleQuizChange(index, "answer_type", type)} answer_type={quiz.answer_type} />
+
+                            {/* 削除ボタン */}
+                            <Button variant="danger" onClick={() => deleteQuizForm(index)}>削除</Button>
                         </div>
                     ))}
 
