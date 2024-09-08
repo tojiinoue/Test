@@ -6,7 +6,7 @@ import Answer_select from "./components/answer_select";
 import Button from "react-bootstrap/Button";
 import "react-datepicker/dist/react-datepicker.css";
 import Wait_Modal from "../../contract/wait_Modal";
-import CreateBulkQuizzes from "./CreateBulkQuizzes"; // CreateBulkQuizzesをインポート
+import CreateBulkQuizzes from "../components/CreateBulkQuizzes"; // 適切な相対パスに変更
 
 const { ethereum } = window;
 const mkdStr = "";
