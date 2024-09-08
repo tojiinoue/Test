@@ -156,12 +156,13 @@ function Create_quiz() {
 
                             <Answer_select name={"回答の追加"} variable={quiz.answer_data} variable1={quiz.correct} set={(data) => handleQuizChange(index, "answer_data", data)} set1={(data) => handleQuizChange(index, "correct", data)} setAnswer_type={(type) => handleQuizChange(index, "answer_type", type)} answer_type={quiz.answer_type} />
 
-                            {/* 削除ボタン */}
-                            <Button variant="danger" onClick={() => deleteQuizForm(index)}>削除</Button>
+                            {/* ボタンを横並びに配置するためのコンテナ */}
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
+                                <Button variant="danger" onClick={() => deleteQuizForm(index)}>削除</Button>
+                                <Button variant="secondary" onClick={addQuizForm}>クイズを追加する</Button>
+                            </div>
                         </div>
                     ))}
-
-                    <Button variant="secondary" onClick={addQuizForm}>クイズを追加する</Button>
 
                     <Form.Group className="mb-3" style={{ textAlign: "left" }}>
                         <Form.Label>回答開始日時</Form.Label>
