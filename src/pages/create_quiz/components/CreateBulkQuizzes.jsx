@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Contracts_MetaMask } from "../../contract/contracts"; // MetaMaskとスマートコントラクトとの接続
+import { Contracts_MetaMask } from "../../../contract/contracts"; // MetaMaskとスマートコントラクトとの接続
 
 function CreateBulkQuizzes() {
   const [quizzes, setQuizzes] = useState([
