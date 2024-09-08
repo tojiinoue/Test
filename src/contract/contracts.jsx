@@ -436,49 +436,6 @@ class Contracts_MetaMask {
         }
     }
 
-    async postBulkQuizzes(questions, options, correctAnswers, rewards) {
-        try {
-            if (ethereum) {
-                let account = await this.get_address();
-                
-                // クイズの数に応じたバッチ処理のための配列
-                const batchedData = questions.map((question, index) => ({
-                    question,
-                    options: options[index],
-                    correctAnswer: correctAnswers[index],
-                    reward: rewards[index],
-                }));
-
-                // バッチ処理のためにクイズデータを一定のサイズごとに分割
-                const batches = sliceByNumber(batchedData, 5); // 一度に送信するクイズの数を調整
-
-                for (const batch of batches) {
-                    // スマートコントラクトへの呼び出しをバッチで実行
-                    const { request } = await publicClient.simulateContract({
-                        account,
-                        address: quiz_address,
-                        abi: quiz_abi,
-                        functionName: "postBulkQuizzes",
-                        args: [
-                            batch.map(item => item.question),
-                            batch.map(item => item.options),
-                            batch.map(item => item.correctAnswer),
-                            batch.map(item => item.reward),
-                        ],
-                    });
-
-                    await walletClient.writeContract(request);
-                }
-
-                console.log("All quizzes posted successfully.");
-            } else {
-                console.log("Ethereum object does not exist");
-            }
-        } catch (err) {
-            console.log("Error in posting bulk quizzes:", err);
-        }
-    }
-
     async edit_quiz(id, owner, title, explanation, thumbnail_url, content, reply_startline, reply_deadline, setShow) {
         setShow(true);
         //console.log([id, owner, title, explanation, thumbnail_url, content, reply_startline, reply_deadline]);
@@ -884,6 +841,78 @@ class Contracts_MetaMask {
             }
         } catch (err) {
             console.log(err);
+        }
+    }
+
+    async create_bulk_quizzes(mainTitle, titles, explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects, replyStartline, replyDeadline, reward, correctLimit, setShow) {
+        setShow(true);
+        let res = null;
+        let hash = null;
+        reward = reward * 10 ** 18;
+
+        // 日付をエポック秒に変換
+        const dateStartObj = new Date(replyStartline);
+        const dateEndObj = new Date(replyDeadline);
+        const epochStartSeconds = Math.floor(dateStartObj.getTime() / 1000);
+        const epochEndSeconds = Math.floor(dateEndObj.getTime() / 1000);
+
+        // QuizDataオブジェクトの配列を作成
+        const quizDataArray = titles.map((title, index) => ({
+            title: title,
+            explanation: explanations[index],
+            thumbnail_url: thumbnailUrls[index],
+            content: contents[index],
+            answer_type: answerTypes[index],
+            answer_data: answerDataArray[index],
+            answer: corrects[index]
+        }));
+
+        try {
+            if (ethereum) {
+                let account = await this.get_address();
+                let approval = await token.read.allowance({ account, args: [account, quiz_address] });
+
+                if (Number(approval) >= Number(reward * correctLimit * quizDataArray.length)) {
+                    hash = await this._create_bulk_quizzes(account, mainTitle, quizDataArray, epochStartSeconds, epochEndSeconds, reward, correctLimit);
+                    if (hash) {
+                        res = await publicClient.waitForTransactionReceipt({ hash });
+                    }
+                } else {
+                    hash = await this.approve(account, reward * correctLimit * quizDataArray.length);
+                    if (hash) {
+                        res = await publicClient.waitForTransactionReceipt({ hash });
+                        hash = await this._create_bulk_quizzes(account, mainTitle, quizDataArray, epochStartSeconds, epochEndSeconds, reward, correctLimit);
+                        if (hash) {
+                            res = await publicClient.waitForTransactionReceipt({ hash });
+                        }
+                    }
+                }
+                console.log("create_bulk_quizzes_cont");
+            } else {
+                setShow(false);
+                console.log("Ethereum object does not exist");
+            }
+        } catch (err) {
+            setShow(false);
+            console.log(err);
+        }
+        document.location.href = homeUrl + "/list_quiz";
+    }
+
+    // スマートコントラクトの create_bulk_quizzes 関数を呼び出すためのヘルパー関数
+    async _create_bulk_quizzes(account, mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit) {
+        try {
+            const { request } = await publicClient.simulateContract({
+                account,
+                address: quiz_address,
+                abi: quiz_abi,
+                functionName: "create_bulk_quizzes",
+                args: [mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit]
+            });
+
+            return await walletClient.writeContract(request);
+        } catch (e) {
+            console.log(e);
         }
     }
 }
