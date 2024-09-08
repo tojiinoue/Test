@@ -10,6 +10,37 @@ import Wait_Modal from "../../contract/wait_Modal";
 const { ethereum } = window;
 const mkdStr = "";
 
+function getLocalizedDateTimeString(now = new Date()) {
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+
+    const formatter = new Intl.DateTimeFormat("ja-JP", {
+        timeZone: "Asia/Tokyo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    });
+
+    const localizedDateTimeString = formatter
+        .format(now)
+        .replace(/\u200E|\u200F/g, "")
+        .replace(/\//g, "-")
+        .replace(/ /, "T");
+
+    return localizedDateTimeString;
+}
+
+function addDays(date, days) {
+    date.setDate(date.getDate() + days);
+    return date;
+}
+
 function Create_quiz() {
     const [mainTitle, setMainTitle] = useState(""); // 大枠のタイトル
     const [quizzes, setQuizzes] = useState([{ // 初期状態として1つのクイズフォームを設定
