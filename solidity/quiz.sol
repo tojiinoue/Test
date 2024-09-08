@@ -20,9 +20,6 @@ contract Quiz_Dapp is class_room {
 
     constructor() {}
 
-    // クイズの状態を示す列挙型
-    enum QuizState { Unanswered, Incorrect, Correct, Answered }
-
     struct Quiz {
         uint quiz_id; //対象となるリクエストのid
         address owner; //出題者
@@ -39,36 +36,24 @@ contract Quiz_Dapp is class_room {
         uint reward;
         uint respondent_count;
         uint respondent_limit;
-        QuizState state; // 状態を追加
         bool is_payment;
         string confirm_answer;
         uint answer_count;
-        mapping(address => QuizState) respondents_map; // 型をQuizStateに修正
+        mapping(address => uint) respondents_map; //0が未回答,1が不正解,2が正解,3が回答済み
+        mapping(address => uint) respondents_state;
         Answer[] answers;
         mapping(address => bytes32) students_answer_hashs;
     }
 
-    struct QuizSummary {
-        uint quiz_id;
-        address owner;
-        string title;
-        string explanation;
-        string thumbnail_url;
-        string content;
-        uint answer_type;
-        uint create_time_epoch;
-        uint256 start_time_epoch;
-        uint time_limit_epoch;
-        uint reward;
-        uint respondent_count;
-        uint respondent_limit;
-    }
     struct Answer {
         address respondent;
         uint answer_time;
         uint reward;
         bool result;
     }
+
+    Quiz[] public quizzes;
+    mapping(uint => Quiz) public quizMap;
 
     Quiz[] private quizs;
 
@@ -89,6 +74,23 @@ contract Quiz_Dapp is class_room {
     }
 
     event Create_quiz(address indexed _sender, uint indexed id);
+
+    // クイズを一括で投稿するための関数
+    function postBulkQuizzes(
+        string[] memory questions,
+        string[][] memory options,
+        uint[] memory correctAnswers,
+        uint[] memory rewards
+    ) public {
+        require(questions.length == options.length && options.length == correctAnswers.length && correctAnswers.length == rewards.length, "Input arrays length mismatch");
+
+        for (uint i = 0; i < questions.length; i++) {
+            uint quizId = quizzes.length;  // クイズIDは現在のクイズ配列の長さと同じに設定
+            Quiz memory newQuiz = Quiz(quizId, questions[i], options[i], correctAnswers[i], rewards[i], msg.sender);
+            quizzes.push(newQuiz);
+            quizMap[quizId] = newQuiz;
+        }
+    }
 
     function create_quiz(
         string memory _title,
@@ -123,7 +125,6 @@ contract Quiz_Dapp is class_room {
         quizs[id].reward = _reward;
         quizs[id].respondent_count = 0;
         quizs[id].respondent_limit = _respondent_limit;
-        quizs[id].state = QuizState.Unanswered; // クイズ作成時にステータスを「未回答」に設定
         users[msg.sender].create_quiz_count += 1;
         emit Create_quiz(msg.sender, id);
         return id;
@@ -212,7 +213,7 @@ contract Quiz_Dapp is class_room {
             uint reward,
             uint respondent_count,
             uint respondent_limit,
-            QuizState state // QuizStateの型に修正
+            uint state
         )
     {
         id = _quiz_id;
@@ -228,7 +229,7 @@ contract Quiz_Dapp is class_room {
         reward = quizs[_quiz_id].reward;
         respondent_count = quizs[_quiz_id].respondent_count;
         respondent_limit = quizs[_quiz_id].respondent_limit;
-        state = quizs[_quiz_id].state; // QuizStateを返す
+        state = quizs[_quiz_id].respondents_map[msg.sender];
     }
 
     function get_is_payment(uint _quiz_id) public view returns(bool is_payment){
@@ -269,44 +270,6 @@ contract Quiz_Dapp is class_room {
         respondent_limit = quizs[_quiz_id].respondent_limit;
     }
 
-    // クイズリスト取得関数
-    function get_quiz_list(uint256 start, uint256 count, QuizState stateFilter) public view returns (QuizSummary[] memory) {
-    　　uint256 totalQuizzes = quizs.length;
-    　　uint256 resultCount = 0;
-
-    　　// 状態に基づいてクイズをフィルタリングし、動的な配列を使って最終結果を収集
-    　　QuizSummary[] memory tempResults = new QuizSummary[](totalQuizzes);
-
-    　　for (uint256 i = start; i < totalQuizzes && resultCount < count; i++) {
-        　　　　if (quizs[i].state == stateFilter) {
-            　　　　tempResults[resultCount] = QuizSummary(
-                　　　　quizs[i].quiz_id,
-                　　　　quizs[i].owner,
-                　　　　quizs[i].title,
-                　　　　quizs[i].explanation,
-                　　　　quizs[i].thumbnail_url,
-                　　　　quizs[i].content,
-                　　　　quizs[i].answer_type,
-                　　　　quizs[i].create_time_epoch,
-                　　　　quizs[i].start_time_epoch,
-                　　　　quizs[i].time_limit_epoch,
-                　　　　quizs[i].reward,
-            　　　　    quizs[i].respondent_count,
-        　　　　        quizs[i].respondent_limit
-        　　　　    );
-       　　　　     resultCount++;
-      　　　　 　}
-   　　　}
-
- 　　　　// 結果用のクイズ配列のサイズを最小限にして返す
- 　　　　QuizSummary[] memory filteredQuizzes = new QuizSummary[](resultCount);
-　　　　　for (uint256 j = 0; j < resultCount; j++) {
-      　　　  filteredQuizzes[j] = tempResults[j];
-　　　　　}
-
-    　　　return filteredQuizzes;
-　　}
-
     function get_confirm_answer(uint _quiz_id) public view returns(string memory confirm_answer, bool is_payment){
         confirm_answer = quizs[_quiz_id].confirm_answer;
         is_payment = quizs[_quiz_id].is_payment;
@@ -335,7 +298,7 @@ contract Quiz_Dapp is class_room {
             uint reward,
             uint respondent_count,
             uint respondent_limit,
-            QuizState state, // QuizStateの型に修正
+            uint state,
             bool is_payment
         )
     {
@@ -349,7 +312,7 @@ contract Quiz_Dapp is class_room {
         reward = quizs[_quiz_id].reward;
         respondent_count = quizs[_quiz_id].respondent_count;
         respondent_limit = quizs[_quiz_id].respondent_limit;
-        state = quizs[_quiz_id].state; // QuizStateを返す
+        state = quizs[_quiz_id].respondents_map[msg.sender];
         is_payment = quizs[_quiz_id].is_payment;
     }
 
@@ -358,17 +321,18 @@ contract Quiz_Dapp is class_room {
     function save_answer(uint  _quiz_id, string memory _answer) public returns (uint answer_id){
         bytes32 answer_hash = keccak256(abi.encodePacked(_answer));
 
-        if(quizs[_quiz_id].respondents_map[msg.sender] == QuizState.Unanswered){
+        if(quizs[_quiz_id].respondents_map[msg.sender] == 0){
             quizs[_quiz_id].respondent_count += 1;
             quizs[_quiz_id].students_answer_hashs[msg.sender] = answer_hash;
             users[msg.sender].answer_count += 1;
         }
 
+        answer_id = quizs[_quiz_id].answers.length;
+        quizs[_quiz_id].respondents_state[msg.sender] = answer_id;
         quizs[_quiz_id].answers.push();
-        uint answer_id = quizs[_quiz_id].answers.length - 1;
         quizs[_quiz_id].answers[answer_id].respondent = msg.sender;
         quizs[_quiz_id].answers[answer_id].answer_time = block.timestamp;
-        quizs[_quiz_id].respondents_map[msg.sender] = QuizState.Answered; // QuizStateを使用
+        quizs[_quiz_id].respondents_map[msg.sender] = 3;
 
         string memory _quiz_state = "enable answer";
         if(quizs[_quiz_id].time_limit_epoch < block.timestamp){
@@ -388,22 +352,21 @@ contract Quiz_Dapp is class_room {
             address student = students[i];
             bool result;
             uint reward;
-            uint answer_id = quizs[_quiz_id].answers.length; // 回答配列の現在の長さを使用
-            quizs[_quiz_id].answers.push(); // 新しい回答を追加するための空の構造体を追加
+            uint answer_id = quizs[_quiz_id].respondents_state[student];
         
             bytes32 student_answer_hash = get_student_answer_hash(student, _quiz_id);
-            if(answer_hash == student_answer_hash && quizs[_quiz_id].respondents_map[student] != QuizState.Unanswered){
+            if(answer_hash == student_answer_hash && quizs[_quiz_id].respondents_map[student] != 0){
                 reward = quizs[_quiz_id].reward;
                 users[student].result += reward;
                 token.transfer_explanation(student, reward, "correct answer");
-                quizs[_quiz_id].respondents_map[student] = QuizState.Correct;
+                quizs[_quiz_id].respondents_map[student] = 2;
                 result = true;
                 correct_count += 1;
             }else{
                 reward = 0;
                 token.transfer_explanation(student, 0, "Incorrect answer");
                 result = false;
-                quizs[_quiz_id].respondents_map[student] = QuizState.Incorrect;
+                quizs[_quiz_id].respondents_map[msg.sender] = 1;
             }
 
             quizs[_quiz_id].answers[answer_id].reward = reward;
