@@ -156,11 +156,8 @@ function Create_quiz() {
 
                             <Answer_select name={"回答の追加"} variable={quiz.answer_data} variable1={quiz.correct} set={(data) => handleQuizChange(index, "answer_data", data)} set1={(data) => handleQuizChange(index, "correct", data)} setAnswer_type={(type) => handleQuizChange(index, "answer_type", type)} answer_type={quiz.answer_type} />
 
-                            {/* ボタンを横並びに配置するためのコンテナ */}
-                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "20px" }}>
-                                <Button variant="danger" onClick={() => deleteQuizForm(index)}>削除</Button>
-                                <Button variant="secondary" onClick={addQuizForm}>クイズを追加する</Button>
-                            </div>
+                            {/* 削除ボタン */}
+                            <Button variant="danger" onClick={() => deleteQuizForm(index)}>削除</Button>
                         </div>
                     ))}
 
@@ -182,10 +179,10 @@ function Create_quiz() {
                         />
                     </Form.Group>
 
-                    <div style={{ textAlign: "right" }}>
-                        <Button variant="primary" onClick={create_quizzes} style={{ marginTop: "20px" }}>
-                            クイズを作成
-                        </Button>
+                    {/* クイズを追加するボタンとクイズを作成ボタンを横並びに配置 */}
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "20px" }}>
+                        <Button variant="secondary" onClick={addQuizForm}>クイズを追加する</Button>
+                        <Button variant="primary" onClick={create_quizzes}>クイズを作成</Button>
                     </div>
                 </div>
                 <div className="col-2" />
