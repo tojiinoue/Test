@@ -611,24 +611,26 @@ class Contracts_MetaMask {
 
     //startからendまでのクイズを取得
 
-    async get_quiz_list(start, end, statusFilter = 0) {
-        try {
-            let account = await this.get_address();
-            console.log(`Fetching quizzes from ${start} to ${end} with status ${statusFilter}`);
-            
-            let res;
-            if (start <= end) {
-                res = await quiz.read.get_quiz_list({ account, args: [start, end, statusFilter] });
-            } else {
-                res = await quiz.read.get_quiz_list({ account, args: [end, start, statusFilter] });
+    async get_quiz_list(start, end) {
+        //取得したクイズを格納する配列
+        let res = [];
+        let account = await this.get_address();
+
+        console.log(start, end);
+        if (start <= end) {
+            for (let i = start; i < end; i++) {
+                console.log(i);
+                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
+                console.log(res);
             }
-            
-            console.log('Fetched quizzes:', res); // デバッグ用
-            return res;
-        } catch (err) {
-            console.error('Error fetching quiz list:', err);
-            return [];
+        } else {
+            for (let i = start - 1; i >= end; i--) {
+                console.log(i);
+                res.push(await quiz.read.get_quiz_simple({ account, args: [i] }));
+                console.log(res);
+            }
         }
+        return res;
     }
 
     async get_quiz_length() {
