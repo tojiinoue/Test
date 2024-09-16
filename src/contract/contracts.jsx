@@ -903,6 +903,8 @@ class Contracts_MetaMask {
 
     // スマートコントラクトの create_bulk_quizzes 関数を呼び出すためのヘルパー関数
     async _create_bulk_quizzes(account, mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit) {
+        console.log("Simulating contract call for create_bulk_quizzes...");
+
         try {
             const { request } = await publicClient.simulateContract({
                 account,
@@ -912,9 +914,10 @@ class Contracts_MetaMask {
                 args: [mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit]
             });
 
+            console.log('Request generated:', request);  // Request オブジェクトの内容を確認
             return await walletClient.writeContract(request);
         } catch (e) {
-            console.log(e);
+            console.error("Error during simulateContract or writeContract:", e);  // エラーメッセージを出力
         }
     }
 }
