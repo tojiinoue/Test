@@ -84,25 +84,30 @@ function Create_quiz() {
             alert("大枠のタイトルを入力してください");
             return;
         }
-
+    
         const isValid = quizzes.every(quiz => quiz.correct !== "");
         if (!isValid) {
             alert("すべてのクイズに正解を入力してください");
             return;
         }
-
+    
+        const startlineAfterEpoch = new Date(reply_startline).getTime() / 1000;
+        const timelimitAfterEpoch = new Date(reply_deadline).getTime() / 1000;
+    
         // 一括でクイズを作成するロジック
         await Contract.create_bulk_quizzes(
             mainTitle, // 大枠のタイトルを追加
-            quizzes.map(quiz => quiz.title),
-            quizzes.map(quiz => quiz.explanation),
-            quizzes.map(quiz => quiz.thumbnail_url),
-            quizzes.map(quiz => quiz.content),
-            quizzes.map(quiz => quiz.answer_type),
-            quizzes.map(quiz => quiz.answer_data.toString()),
-            quizzes.map(quiz => quiz.correct),
-            reply_startline,
-            reply_deadline,
+            quizzes.map(quiz => ({
+                title: quiz.title,
+                explanation: quiz.explanation,
+                thumbnail_url: quiz.thumbnail_url,
+                content: quiz.content,
+                answer_type: quiz.answer_type,
+                answer_data: quiz.answer_data.toString(),
+                answer: quiz.correct
+            })),
+            startlineAfterEpoch,
+            timelimitAfterEpoch,
             reward,
             correct_limit,
             setShow
