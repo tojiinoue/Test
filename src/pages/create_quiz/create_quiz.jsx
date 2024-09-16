@@ -12,27 +12,15 @@ const mkdStr = "";
 
 // 未定義の関数を追加
 function getLocalizedDateTimeString(now = new Date()) {
+    // 年、月、日、時、分をそれぞれ取得してゼロ埋め
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const hours = String(now.getHours()).padStart(2, "0");
     const minutes = String(now.getMinutes()).padStart(2, "0");
 
-    const formatter = new Intl.DateTimeFormat("ja-JP", {
-        timeZone: "Asia/Tokyo",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-    });
-
-    const localizedDateTimeString = formatter
-        .format(now)
-        .replace(/\u200E|\u200F/g, "")
-        .replace(/\//g, "-")
-        .replace(/ /, "T");
+    // 'yyyy-MM-ddThh:mm' の形式で文字列を生成
+    const localizedDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
 
     return localizedDateTimeString;
 }
@@ -54,12 +42,7 @@ function Create_quiz() {
         correct: ""
     }]);
 
-    const [reply_startline, setReply_startline] = useState(
-        new Date()
-            .toLocaleString("ja-JP", { timeZone: "Asia/Tokyo" })
-            .replace(/[/]/g, "-")
-            .replace(/\s(\d):/, " 0$1:"),
-    );
+    const [reply_startline, setReply_startline] = useState(getLocalizedDateTimeString(new Date()));
     const [reply_deadline, setReply_deadline] = useState(getLocalizedDateTimeString(addDays(new Date(), 1)));
     const [reward, setReward] = useState(0);
     let Contract = new Contracts_MetaMask();
@@ -91,26 +74,30 @@ function Create_quiz() {
             return;
         }
     
-        const startlineAfterEpoch = new Date(reply_startline).getTime() / 1000;
-        const timelimitAfterEpoch = new Date(reply_deadline).getTime() / 1000;
+        // スマートコントラクトに送信するタイムスタンプを取得
+        const startlineAfterEpoch = Math.floor(new Date(reply_startline).getTime() / 1000);
+        const timelimitAfterEpoch = Math.floor(new Date(reply_deadline).getTime() / 1000);
     
-        // 一括でクイズを作成するロジック
+        // クイズデータの構造をスマートコントラクトのABIに合わせる
+        const quizDataArray = quizzes.map(quiz => ({
+            title: quiz.title,
+            explanation: quiz.explanation,
+            thumbnail_url: quiz.thumbnail_url,
+            content: quiz.content,
+            answer_type: quiz.answer_type,
+            answer_data: quiz.answer_data.toString(),
+            answer: quiz.correct
+        }));
+    
+        // クイズ作成をコントラクトに送信
         await Contract.create_bulk_quizzes(
-            mainTitle, // 大枠のタイトルを追加
-            quizzes.map(quiz => ({
-                title: quiz.title,
-                explanation: quiz.explanation,
-                thumbnail_url: quiz.thumbnail_url,
-                content: quiz.content,
-                answer_type: quiz.answer_type,
-                answer_data: quiz.answer_data.toString(),
-                answer: quiz.correct
-            })),
-            startlineAfterEpoch,
-            timelimitAfterEpoch,
-            reward,
-            correct_limit,
-            setShow
+            mainTitle, // 大枠のタイトル
+            quizDataArray, // クイズデータの配列
+            startlineAfterEpoch, // 開始時間（エポック秒）
+            timelimitAfterEpoch, // 終了時間（エポック秒）
+            reward, // 報酬
+            correct_limit, // 回答上限
+            setShow // モーダルの表示状態を設定
         );
     };
 
