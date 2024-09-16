@@ -847,6 +847,10 @@ class Contracts_MetaMask {
     }
 
     async create_bulk_quizzes(mainTitle, titles, explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects, replyStartline, replyDeadline, reward, correctLimit, setShow) {
+        
+        // デバッグ用：quiz_abiの内容をコンソールに出力
+        console.log("ABI content:", JSON.stringify(quiz_abi, null, 2));
+
         setShow(true);
         let res = null;
         let hash = null;
