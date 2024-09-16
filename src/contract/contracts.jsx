@@ -69,7 +69,7 @@ class Contracts_MetaMask {
                 type: "ERC20",
                 options: {
                     address: token_address,
-                    symbol: "Trial",
+                    symbol: "FLT",
                     decimals: 18,
                 },
             },

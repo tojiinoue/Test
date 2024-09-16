@@ -112,45 +112,53 @@ contract Quiz_Dapp is class_room {
 
     event Create_bulk_quizzes(address indexed _sender, uint indexed startId, uint indexed endId);
 
+    // クイズデータをまとめる構造体
+    struct QuizData {
+        string title;
+        string explanation;
+        string thumbnail_url;
+        string content;
+        uint answer_type;
+        string answer_data;
+        string answer;
+    }
+
+    // クイズセット情報を保持するための構造体
+    struct QuizSet {
+        string mainTitle;
+        uint[] quizIds; // セットに含まれるクイズIDのリスト
+    }
+
+    QuizSet[] public quizSets; // クイズセットのリスト
+
     function create_bulk_quizzes(
         string memory mainTitle, // 大枠のタイトル
-        string[] memory _titles,
-        string[] memory _explanations,
-        string[] memory _thumbnail_urls,
-        string[] memory _contents,
-        uint[] memory _answer_types,
-        string[] memory _answer_datas,
-        string[] memory _answers,
+        QuizData[] memory quizDataArray, // クイズデータの配列
         uint _startline_after_epoch,
         uint _timelimit_after_epoch,
         uint _reward,
         uint _respondent_limit
     ) public {
-        require(
-            _titles.length == _explanations.length &&
-            _titles.length == _thumbnail_urls.length &&
-            _titles.length == _contents.length &&
-            _titles.length == _answer_types.length &&
-            _titles.length == _answer_datas.length &&
-            _titles.length == _answers.length,
-            "All input arrays must have the same length"
-        );
+        uint quizCount = quizDataArray.length;
+        require(quizCount > 0, "At least one quiz is required");
 
-        require(token.allowance(msg.sender, address(this)) >= _reward * _respondent_limit * _titles.length, "Not enough token approve fees");
-        token.transferFrom_explanation(msg.sender, address(this), _reward * _respondent_limit * _titles.length, "create_bulk_quizzes");
+        require(token.allowance(msg.sender, address(this)) >= _reward * _respondent_limit * quizCount, "Not enough token approve fees");
+        token.transferFrom_explanation(msg.sender, address(this), _reward * _respondent_limit * quizCount, "create_bulk_quizzes");
 
         uint startId = quizs.length; // 最初のクイズID
-        for (uint i = 0; i < _titles.length; i++) {
+        uint[] memory quizIds = new uint[](quizCount);
+
+        for (uint i = 0; i < quizCount; i++) {
             uint id = quizs.length;
             quizs.push();
-            bytes32 answer_hash = keccak256(abi.encodePacked(_answers[i]));
+            bytes32 answer_hash = keccak256(abi.encodePacked(quizDataArray[i].answer));
             quizs[id].owner = msg.sender;
-            quizs[id].title = _titles[i];
-            quizs[id].explanation = _explanations[i];
-            quizs[id].thumbnail_url = _thumbnail_urls[i];
-            quizs[id].content = _contents[i];
-            quizs[id].answer_type = _answer_types[i];
-            quizs[id].answer_data = _answer_datas[i];
+            quizs[id].title = quizDataArray[i].title;
+            quizs[id].explanation = quizDataArray[i].explanation;
+            quizs[id].thumbnail_url = quizDataArray[i].thumbnail_url;
+            quizs[id].content = quizDataArray[i].content;
+            quizs[id].answer_type = quizDataArray[i].answer_type;
+            quizs[id].answer_data = quizDataArray[i].answer_data;
             quizs[id].answer_hash = answer_hash;
             quizs[id].create_time_epoch = block.timestamp;
             quizs[id].start_time_epoch = _startline_after_epoch;
@@ -159,7 +167,13 @@ contract Quiz_Dapp is class_room {
             quizs[id].respondent_count = 0;
             quizs[id].respondent_limit = _respondent_limit;
             users[msg.sender].create_quiz_count += 1;
+            
+            quizIds[i] = id; // セット内のクイズIDを保存
         }
+
+        // クイズセットを保存
+        quizSets.push(QuizSet(mainTitle, quizIds));
+
         uint endId = quizs.length - 1; // 最後のクイズID
         emit Create_bulk_quizzes(msg.sender, startId, endId);
     }
