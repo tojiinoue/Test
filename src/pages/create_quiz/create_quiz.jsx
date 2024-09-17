@@ -75,32 +75,40 @@ function Create_quiz() {
             alert("大枠のタイトルを入力してください");
             return;
         }
-    
+        
         const isValid = quizzes.every(quiz => quiz.correct !== "");
         if (!isValid) {
             alert("すべてのクイズに正解を入力してください");
             return;
         }
+        
+        // 各クイズのタイトルを配列として抽出
+        const titles = quizzes.map(quiz => quiz.title);
     
-        const titles = quizzes.map(quiz => quiz.title || ""); // titleがundefinedでないか確認
+        // explanationsフィールドを文字列の配列として抽出
+        const explanations = quizzes.map(quiz => quiz.explanation || "");
+    
+        // 各クイズのデータを必要な形式に変換
         const quizDataArray = quizzes.map(quiz => ({
-            explanation: quiz.explanation || "",
-            thumbnail_url: quiz.thumbnail_url || "",
-            content: quiz.content || "",
-            answer_type: quiz.answer_type || 0,
-            answer_data: quiz.answer_data ? quiz.answer_data.toString() : "",
-            answer: quiz.correct || ""
+            explanation: quiz.explanation,
+            thumbnail_url: quiz.thumbnail_url,
+            content: quiz.content,
+            answer_type: quiz.answer_type,
+            answer_data: quiz.answer_data.toString(),
+            answer: quiz.correct
         }));
     
         const startlines = quizzes.map(quiz => Math.floor(new Date(quiz.startline).getTime() / 1000));
         const deadlines = quizzes.map(quiz => Math.floor(new Date(quiz.deadline).getTime() / 1000));
         const rewards = quizzes.map(quiz => quiz.reward);
         const respondent_limits = quizzes.map(quiz => quiz.respondent_limit);
-    
+        
+        // クイズ作成をコントラクトに送信
         try {
             await Contract.create_bulk_quizzes(
                 mainTitle,
-                titles, 
+                titles, // タイトルの配列を渡す
+                explanations, // 説明の配列を渡す
                 quizDataArray,
                 startlines,
                 deadlines,
