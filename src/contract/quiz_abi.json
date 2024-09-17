@@ -24,6 +24,31 @@
 				{
 					"indexed": true,
 					"internalType": "address",
+					"name": "sender",
+					"type": "address"
+				},
+				{
+					"indexed": false,
+					"internalType": "uint256[]",
+					"name": "quizIds",
+					"type": "uint256[]"
+				},
+				{
+					"indexed": false,
+					"internalType": "address[]",
+					"name": "userAddresses",
+					"type": "address[]"
+				}
+			],
+			"name": "BulkAnswersSubmitted",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "address",
 					"name": "_sender",
 					"type": "address"
 				},
@@ -111,6 +136,25 @@
 				}
 			],
 			"name": "Payment_of_reward",
+			"type": "event"
+		},
+		{
+			"anonymous": false,
+			"inputs": [
+				{
+					"indexed": true,
+					"internalType": "uint256",
+					"name": "quizId",
+					"type": "uint256"
+				},
+				{
+					"indexed": false,
+					"internalType": "address[]",
+					"name": "winners",
+					"type": "address[]"
+				}
+			],
+			"name": "RewardsDistributed",
 			"type": "event"
 		},
 		{
@@ -299,6 +343,36 @@
 		{
 			"inputs": [
 				{
+					"components": [
+						{
+							"internalType": "uint256",
+							"name": "quizId",
+							"type": "uint256"
+						},
+						{
+							"internalType": "string",
+							"name": "answer",
+							"type": "string"
+						},
+						{
+							"internalType": "address",
+							"name": "user",
+							"type": "address"
+						}
+					],
+					"internalType": "struct Quiz_Dapp.AnswerData[]",
+					"name": "answers",
+					"type": "tuple[]"
+				}
+			],
+			"name": "bulkSubmitAnswers",
+			"outputs": [],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
 					"internalType": "string",
 					"name": "mainTitle",
 					"type": "string"
@@ -346,24 +420,24 @@
 					"type": "tuple[]"
 				},
 				{
-					"internalType": "uint256",
-					"name": "_startline_after_epoch",
-					"type": "uint256"
+					"internalType": "uint256[]",
+					"name": "startline_after_epochs",
+					"type": "uint256[]"
 				},
 				{
-					"internalType": "uint256",
-					"name": "_timelimit_after_epoch",
-					"type": "uint256"
+					"internalType": "uint256[]",
+					"name": "timelimit_after_epochs",
+					"type": "uint256[]"
 				},
 				{
-					"internalType": "uint256",
-					"name": "_reward",
-					"type": "uint256"
+					"internalType": "uint256[]",
+					"name": "rewards",
+					"type": "uint256[]"
 				},
 				{
-					"internalType": "uint256",
-					"name": "_respondent_limit",
-					"type": "uint256"
+					"internalType": "uint256[]",
+					"name": "respondent_limits",
+					"type": "uint256[]"
 				}
 			],
 			"name": "create_bulk_quizzes",
@@ -437,6 +511,24 @@
 					"type": "uint256"
 				}
 			],
+			"stateMutability": "nonpayable",
+			"type": "function"
+		},
+		{
+			"inputs": [
+				{
+					"internalType": "uint256",
+					"name": "quizId",
+					"type": "uint256"
+				},
+				{
+					"internalType": "address[]",
+					"name": "winners",
+					"type": "address[]"
+				}
+			],
+			"name": "distributeRewards",
+			"outputs": [],
 			"stateMutability": "nonpayable",
 			"type": "function"
 		},

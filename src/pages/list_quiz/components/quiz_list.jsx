@@ -2,10 +2,9 @@ import { useEffect, useRef } from "react";
 import Simple_quiz from "./quiz_simple";
 
 function Quiz_list(props) {
-    const { cont, quiz_list, Set_quiz_list, now_numRef, targetRef } = props;
+    const { cont, quiz_list, setQuizList, now_numRef, targetRef } = props;
     const add_num = useRef(Math.floor(window.innerHeight / 100) + 2); // 一度に追加するクイズ数
 
-    // クイズのリストを取得する関数
     const get_quiz_list = async (now) => {
         let add_quiz_list = [];
 
@@ -19,7 +18,7 @@ function Quiz_list(props) {
         }
 
         // 新たに取得したクイズをリストに追加
-        Set_quiz_list((prevList) => [
+        setQuizList((prevList) => [
             ...prevList, 
             ...add_quiz_list.map((quiz, index) => (
                 <Simple_quiz key={index} quiz={quiz} />
@@ -27,7 +26,6 @@ function Quiz_list(props) {
         ]);
     };
 
-    // IntersectionObserverを使用して無限スクロールを実装
     useEffect(() => {
         const observerOptions = {
             root: null,

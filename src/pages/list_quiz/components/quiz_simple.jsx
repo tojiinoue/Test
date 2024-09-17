@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./quiz_simple.css";
 
-
 function Time_diff(props) {
     function convertSecondsToHours(secondsLimit, secondsStart) {
         let isBeforeStartline = false;
@@ -43,7 +42,7 @@ function Time_diff(props) {
         }
 
         if (isBeforeStartline) {
-            return "回答開始時間まで" + res;
+            return "回答開始時間まで " + res;
         } else {
             return epochTime2 - epochTime1 > 0 ? "締め切りまで " + res : "締切終了";
         }
@@ -56,42 +55,46 @@ function Time_diff(props) {
     );
 }
 
-function Simple_quiz({ quiz }) {
+function Simple_quiz({ quiz, quizSetTitle }) {
     const [show, setShow] = useState(false);
     const [isReward, setIsReward] = useState(true);
     const [isPayment, setIsPayment] = useState(false);
 
     useEffect(() => {
-        setIsReward(Number(quiz[7]) !== 0);
-        setIsPayment(quiz[11]);
+        setIsReward(Number(quiz[7]) !== 0); // 報酬が0でないかチェック
+        setIsPayment(quiz[11]); // 支払い状態を設定
     }, [quiz]);
 
     const quizStatus = ["未回答", "不正解", "正解", "回答済み"][quiz[10]] || "";
-    const cardStatusClass = Number(quiz[10]) === 0 ? 'bg-blue' : '';
+    const cardStatusClass = Number(quiz[10]) === 0 ? 'bg-blue' : ''; // 状態に応じたクラスを設定
 
     return (
         <div onClick={() => setShow(true)}>
             <div className={`quiz_card ${cardStatusClass} ${isPayment ? 'border border-danger' : ''} ${isReward ? 'border border-primary' : ''}`}>
                 <Link to={`/answer_quiz/${Number(quiz[0])}`} style={{ color: "black", textDecoration: "none" }}>
                     <div className="row quiz_card_1">
+                        {/* クイズセットの大枠タイトルを表示 */}
+                        <div className="col-12 quiz_main_title">
+                            {quizSetTitle}
+                        </div>
                         <div className="col-2">
                             <img src={quiz[4]} className="img-fluid" alt="Quiz Thumbnail" />
                         </div>
                         <div className="col-10" style={{ textAlign: "left" }}>
                             <div className="row h-20">
-                                <div className="col-sm-12 col-md-12 col-lg-12">{quiz[2]}</div>
+                                <div className="col-sm-12 col-md-12 col-lg-12">{quiz[2]}</div> {/* クイズのタイトル */}
                             </div>
                             <div className="row h-80" style={{ whiteSpace: "pre-wrap", fontSize: "14px", lineHeight: "1" }}>
-                                <div className="col-sm-12 col-md-12 col-lg-12">{quiz[3]}</div>
+                                <div className="col-sm-12 col-md-12 col-lg-12">{quiz[3]}</div> {/* クイズの説明 */}
                             </div>
                             <div className="row h-20" style={{ fontSize: "14px" }}>
                                 <Time_diff start={Number(quiz[5])} limit={Number(quiz[6])} />
                             </div>
                             <div className="d-flex" style={{ fontSize: "14px", lineHeight: "1" }}>
-                                <div className="col-3">報酬 {Number(quiz[7]) / (10 ** 18)} FLT</div>
-                                <div className="col-3">回答者数 {Number(quiz[8])}</div>
-                                <div className="col-3">上限 {Number(quiz[9])}</div>
-                                <div className="col-3">状態 {quizStatus}</div>
+                                <div className="col-3">報酬 {Number(quiz[7]) / (10 ** 18)} FLT</div> {/* 報酬 */}
+                                <div className="col-3">回答者数 {Number(quiz[8])}</div> {/* 回答者数 */}
+                                <div className="col-3">上限 {Number(quiz[9])}</div> {/* 回答上限 */}
+                                <div className="col-3">状態 {quizStatus}</div> {/* クイズの状態 */}
                             </div>
                         </div>
                     </div>

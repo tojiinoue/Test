@@ -847,22 +847,16 @@ class Contracts_MetaMask {
     }
 
     async create_bulk_quizzes(mainTitle, titles, explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects, replyStartline, replyDeadline, reward, correctLimit, setShow) {
-        
-        // デバッグ用：quiz_abiの内容をコンソールに出力
-        console.log("ABI content:", JSON.stringify(quiz_abi, null, 2));
-
         setShow(true);
         let res = null;
         let hash = null;
         reward = reward * 10 ** 18;
-
-        // 日付をエポック秒に変換
+    
         const dateStartObj = new Date(replyStartline);
         const dateEndObj = new Date(replyDeadline);
         const epochStartSeconds = Math.floor(dateStartObj.getTime() / 1000);
         const epochEndSeconds = Math.floor(dateEndObj.getTime() / 1000);
-
-        // QuizDataオブジェクトの配列を作成
+    
         const quizDataArray = titles.map((title, index) => ({
             title: title,
             explanation: explanations[index],
@@ -872,12 +866,12 @@ class Contracts_MetaMask {
             answer_data: answerDataArray[index],
             answer: corrects[index]
         }));
-
+    
         try {
             if (ethereum) {
                 let account = await this.get_address();
                 let approval = await token.read.allowance({ account, args: [account, quiz_address] });
-
+    
                 if (Number(approval) >= Number(reward * correctLimit * quizDataArray.length)) {
                     hash = await this._create_bulk_quizzes(account, mainTitle, quizDataArray, epochStartSeconds, epochEndSeconds, reward, correctLimit);
                     if (hash) {
@@ -893,7 +887,6 @@ class Contracts_MetaMask {
                         }
                     }
                 }
-                console.log("create_bulk_quizzes_cont");
             } else {
                 setShow(false);
                 console.log("Ethereum object does not exist");
@@ -904,11 +897,9 @@ class Contracts_MetaMask {
         }
         document.location.href = homeUrl + "/list_quiz";
     }
-
-    // スマートコントラクトの create_bulk_quizzes 関数を呼び出すためのヘルパー関数
-    // contracts.jsx 内の該当する関数の冒頭にデバッグ用の console.log を追加
+    
+    // _create_bulk_quizzes ヘルパー関数
     async _create_bulk_quizzes(account, mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit) {
-        console.log("Debug: Arguments for _create_bulk_quizzes", { account, mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit });
         try {
             const { request } = await publicClient.simulateContract({
                 account,
@@ -917,11 +908,43 @@ class Contracts_MetaMask {
                 functionName: "create_bulk_quizzes",
                 args: [mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit]
             });
-
-            console.log("Debug: Simulated request", request);
             return await walletClient.writeContract(request);
         } catch (e) {
-            console.log("Debug: Error in _create_bulk_quizzes", e);
+            console.log("Error in _create_bulk_quizzes", e);
+        }
+    }
+
+    async bulkSubmitAnswers(answers) {
+        if (!ethereum) return console.error("Ethereum provider is not available");
+        try {
+            const account = await this.get_address();
+            const { request } = await publicClient.simulateContract({
+                account,
+                address: quiz_address,
+                abi: quiz_abi,
+                functionName: "bulkSubmitAnswers",
+                args: [answers]
+            });
+            return await walletClient.writeContract(request);
+        } catch (e) {
+            console.error("Error in bulkSubmitAnswers:", e);
+        }
+    }
+
+    async distributeRewards(quizId, winners) {
+        if (!ethereum) return console.error("Ethereum provider is not available");
+        try {
+            const account = await this.get_address();
+            const { request } = await publicClient.simulateContract({
+                account,
+                address: quiz_address,
+                abi: quiz_abi,
+                functionName: "distributeRewards",
+                args: [quizId, winners]
+            });
+            return await walletClient.writeContract(request);
+        } catch (e) {
+            console.error("Error in distributeRewards:", e);
         }
     }
 }
