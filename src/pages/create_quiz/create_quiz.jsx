@@ -79,9 +79,11 @@ function Create_quiz() {
             return;
         }
     
-        // 各クイズのタイムスタンプや報酬を取得
+        // 各クイズのタイトルを配列として抽出
+        const titles = quizzes.map(quiz => quiz.title);
+    
+        // 各クイズのデータを必要な形式に変換
         const quizDataArray = quizzes.map(quiz => ({
-            title: quiz.title,
             explanation: quiz.explanation,
             thumbnail_url: quiz.thumbnail_url,
             content: quiz.content,
@@ -89,15 +91,16 @@ function Create_quiz() {
             answer_data: quiz.answer_data.toString(),
             answer: quiz.correct
         }));
-
+    
         const startlines = quizzes.map(quiz => Math.floor(new Date(quiz.startline).getTime() / 1000));
         const deadlines = quizzes.map(quiz => Math.floor(new Date(quiz.deadline).getTime() / 1000));
         const rewards = quizzes.map(quiz => quiz.reward);
         const respondent_limits = quizzes.map(quiz => quiz.respondent_limit);
-
+    
         // クイズ作成をコントラクトに送信
         await Contract.create_bulk_quizzes(
             mainTitle,
+            titles, // タイトルの配列を渡す
             quizDataArray,
             startlines,
             deadlines,
