@@ -147,12 +147,70 @@ function Create_quiz() {
 
                     {quizzes.map((quiz, index) => (
                         <div key={index}>
-                            {/* クイズのフィールドを入力するUI */}
-                            <Form.Group className="mb-3" controlId={`form_title_${index}`} style={{ textAlign: "left" }}>
-                                <Form.Label>タイトル</Form.Label>
-                                <Form.Control type="text" placeholder="Enter Title" value={quiz.title} onChange={(e) => handleQuizChange(index, "title", e.target.value)} />
+                            <Form>
+                                <Form.Group className="mb-3" controlId={`form_title_${index}`} style={{ textAlign: "left" }}>
+                                    <Form.Label>タイトル</Form.Label>
+                                    <Form.Control type="text" placeholder="Enter Title" value={quiz.title} onChange={(e) => handleQuizChange(index, "title", e.target.value)} />
+                                </Form.Group>
+                            </Form>
+                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                                <Form.Label>説明</Form.Label>
+                                <Form.Control as="textarea" rows={quiz.explanation.split("\n").length + 3} value={quiz.explanation} onChange={(e) => handleQuizChange(index, "explanation", e.target.value)} />
                             </Form.Group>
-                            {/* ...その他のクイズフィールド */}
+
+                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                                <Form.Label>サムネイル</Form.Label>
+                                <Form.Control type="url" value={quiz.thumbnail_url} onChange={(e) => handleQuizChange(index, "thumbnail_url", e.target.value)} />
+                            </Form.Group>
+                            <img src={quiz.thumbnail_url} width="200" />
+                            <br />
+
+                            <Form.Group className="mb-3" data-color-mode="light" style={{ textAlign: "left" }}>
+                                <Form.Label>内容</Form.Label>
+                                <MDEditor height={500} value={quiz.content} onChange={(value) => handleQuizChange(index, "content", value)} />
+                            </Form.Group>
+
+                            <Answer_select name={"回答の追加"} variable={quiz.answer_data} variable1={quiz.correct} set={(data) => handleQuizChange(index, "answer_data", data)} set1={(data) => handleQuizChange(index, "correct", data)} setAnswer_type={(type) => handleQuizChange(index, "answer_type", type)} answer_type={quiz.answer_type} />
+
+                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                                <Form.Label>回答開始日時</Form.Label>
+                                <Form.Control
+                                    type="datetime-local"
+                                    value={quiz.startline}
+                                    onChange={(e) => handleQuizChange(index, "startline", e.target.value)}
+                                />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                                <Form.Label>回答締切日時</Form.Label>
+                                <Form.Control
+                                    type="datetime-local"
+                                    value={quiz.deadline}
+                                    onChange={(e) => handleQuizChange(index, "deadline", e.target.value)}
+                                />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                                <Form.Label>報酬</Form.Label>
+                                <Form.Control
+                                    type="number"
+                                    placeholder="Reward"
+                                    value={quiz.reward}
+                                    onChange={(e) => handleQuizChange(index, "reward", Number(e.target.value))}
+                                />
+                            </Form.Group>
+
+                            <Form.Group className="mb-3" style={{ textAlign: "left" }}>
+                                <Form.Label>回答者制限</Form.Label>
+                                <Form.Control
+                                    type="number"
+                                    placeholder="Respondent Limit"
+                                    value={quiz.respondent_limit}
+                                    onChange={(e) => handleQuizChange(index, "respondent_limit", Number(e.target.value))}
+                                />
+                            </Form.Group>
+
+                            <Button variant="danger" onClick={() => deleteQuizForm(index)}>削除</Button>
                         </div>
                     ))}
 
