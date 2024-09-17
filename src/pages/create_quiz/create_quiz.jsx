@@ -71,48 +71,43 @@ function Create_quiz() {
 
     // Quiz作成処理
     const create_quizzes = async () => {
-        if (!contractInstance) {
-            alert("MetaMaskと接続できていません。再度接続してください。");
-            return;
-        }
-
         if (mainTitle.trim() === "") {
             alert("大枠のタイトルを入力してください");
             return;
         }
-
+    
         const isValid = quizzes.every(quiz => quiz.correct !== "");
         if (!isValid) {
             alert("すべてのクイズに正解を入力してください");
             return;
         }
-
-        const titles = quizzes.map(quiz => quiz.title);
+    
+        const titles = quizzes.map(quiz => quiz.title || ""); // titleがundefinedでないか確認
         const quizDataArray = quizzes.map(quiz => ({
-            explanation: quiz.explanation,
-            thumbnail_url: quiz.thumbnail_url,
-            content: quiz.content,
-            answer_type: quiz.answer_type,
-            answer_data: quiz.answer_data.toString(),
-            answer: quiz.correct
+            explanation: quiz.explanation || "",
+            thumbnail_url: quiz.thumbnail_url || "",
+            content: quiz.content || "",
+            answer_type: quiz.answer_type || 0,
+            answer_data: quiz.answer_data ? quiz.answer_data.toString() : "",
+            answer: quiz.correct || ""
         }));
-
+    
         const startlines = quizzes.map(quiz => Math.floor(new Date(quiz.startline).getTime() / 1000));
         const deadlines = quizzes.map(quiz => Math.floor(new Date(quiz.deadline).getTime() / 1000));
         const rewards = quizzes.map(quiz => quiz.reward);
         const respondent_limits = quizzes.map(quiz => quiz.respondent_limit);
-
+    
         try {
-            await contractInstance.create_bulk_quizzes(
+            await Contract.create_bulk_quizzes(
                 mainTitle,
                 titles, 
                 quizDataArray,
                 startlines,
                 deadlines,
                 rewards,
-                respondent_limits
+                respondent_limits,
+                setShow
             );
-            alert("クイズが正常に作成されました。");
         } catch (error) {
             console.error("クイズ作成中にエラーが発生しました:", error);
             alert("クイズ作成中にエラーが発生しました。詳細はコンソールをご確認ください。");
