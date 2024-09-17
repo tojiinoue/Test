@@ -847,6 +847,27 @@ class Contracts_MetaMask {
     }
 
     async create_bulk_quizzes(mainTitle, titles, explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects, replyStartline, replyDeadline, reward, correctLimit, setShow) {
+        // 基本的な引数の型とフォーマットのチェック
+        if (typeof mainTitle !== 'string') throw new Error('mainTitle must be a string');
+        if (!Array.isArray(titles) || !titles.every(t => typeof t === 'string')) throw new Error('titles must be an array of strings');
+        if (!Array.isArray(explanations) || !explanations.every(e => typeof e === 'string')) throw new Error('explanations must be an array of strings');
+        if (!Array.isArray(thumbnailUrls) || !thumbnailUrls.every(t => typeof t === 'string')) throw new Error('thumbnailUrls must be an array of strings');
+        if (!Array.isArray(contents) || !contents.every(c => typeof c === 'string')) throw new Error('contents must be an array of strings');
+        if (!Array.isArray(answerTypes) || !answerTypes.every(a => typeof a === 'number')) throw new Error('answerTypes must be an array of numbers');
+        if (!Array.isArray(answerDataArray) || !answerDataArray.every(a => typeof a === 'string')) throw new Error('answerDataArray must be an array of strings');
+        if (!Array.isArray(corrects) || !corrects.every(c => typeof c === 'string')) throw new Error('corrects must be an array of strings');
+        if (typeof replyStartline !== 'string' || isNaN(Date.parse(replyStartline))) throw new Error('replyStartline must be a valid date string');
+        if (typeof replyDeadline !== 'string' || isNaN(Date.parse(replyDeadline))) throw new Error('replyDeadline must be a valid date string');
+        if (typeof reward !== 'number') throw new Error('reward must be a number');
+        if (typeof correctLimit !== 'number') throw new Error('correctLimit must be a number');
+        if (typeof setShow !== 'function') throw new Error('setShow must be a function');
+    
+        // 配列の長さのチェック
+        const arrayLength = titles.length;
+        if (![explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects].every(arr => arr.length === arrayLength)) {
+            throw new Error('All input arrays must have the same length');
+        }
+        
         setShow(true);
         let res = null;
         let hash = null;
