@@ -84,7 +84,7 @@ function User_card(props) {
                         </div>
                         <div className="col token-result d-flex flex-column">
                             <div>獲得点数</div>
-                            <div>{Number(props.result)/40}点</div>
+                            <div>{Number(props.result)/20}点</div>
                         </div>
                     </div>
                 </div>
@@ -127,7 +127,7 @@ function User_card(props) {
                         </div>
                         <div className="col token-result d-flex flex-column">
                             <div>授業での配点</div>
-                            <div>{Number(props.result)/40}点</div>
+                            <div>{Number(props.result)/20}点</div>
                         </div>
                     </div>
                 </div>

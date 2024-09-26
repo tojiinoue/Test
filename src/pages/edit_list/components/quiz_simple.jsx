@@ -132,11 +132,11 @@ function Simple_quiz(props) {
                                     <div className="col-3">
                                         <div className="col">報酬</div>
                                         <div className="col" style={{ textAlign: "center" }}>
-                                            {Number(props.quiz[10]) / (10 ** 18)}Wake
+                                            {Number(props.quiz[10]) / (10 ** 18)}FLT
                                         </div>
                                     </div>
                                     <div className="col-3">
-                                        <div className="col">正解数</div>
+                                        <div className="col">回答数</div>
                                         <div className="col" style={{ textAlign: "center" }}>
                                             {Number(props.quiz[11])}
                                         </div>
@@ -150,7 +150,7 @@ function Simple_quiz(props) {
                                     <div className="col-3">
                                         <div className="col">状態</div>
                                         <div className="col" style={{ textAlign: "center" }}>
-                                            {Number(props.quiz[13]) == 0 ? "未回答" : Number(props.quiz[13]) == 1 ? "不正解" : Number(props.quiz[13]) == 2 ? "正解" : ""}
+                                            {Number(props.quiz[13]) == 0 ? "未回答" : Number(props.quiz[13]) == 1 ? "不正解" : Number(props.quiz[13]) == 2 ? "正解" : Number(props.quiz[13]) == 3 ? "解答済み" :""}
                                         </div>
                                     </div>
 

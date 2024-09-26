@@ -94,7 +94,7 @@ function View_result(props) {
                             <tr>
                                 <td>{index + 1}</td>
                                 <td>{item.student}</td>
-                                <td>{Number(item.result) / 10 ** 18}点</td>
+                                <td>{Number(item.result) / 10 ** 18 /20}点</td>
                             </tr>
                         );
                     })}

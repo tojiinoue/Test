@@ -52,6 +52,13 @@ contract Quiz_Dapp is class_room {
         bool result;
     }
 
+    // 一括解答用の構造体
+    struct AnswerData {
+        uint quizId; // クイズID
+        string answer; // ユーザーの解答
+        address user; // 解答したユーザー
+    }
+
     Quiz[] private quizs;
 
     event Set_approve(bool isSuccess, uint allowance, address owner, address spender);
@@ -110,6 +117,7 @@ contract Quiz_Dapp is class_room {
         return id;
     }
 
+    // クイズセット作成イベント
     event Create_bulk_quizzes(address indexed _sender, uint indexed startId, uint indexed endId);
 
     // クイズデータをまとめる構造体
@@ -134,16 +142,25 @@ contract Quiz_Dapp is class_room {
     function create_bulk_quizzes(
         string memory mainTitle, // 大枠のタイトル
         QuizData[] memory quizDataArray, // クイズデータの配列
-        uint _startline_after_epoch,
-        uint _timelimit_after_epoch,
-        uint _reward,
-        uint _respondent_limit
+        uint[] memory startline_after_epochs, // 各クイズの開始時間（エポック秒）
+        uint[] memory timelimit_after_epochs, // 各クイズの終了時間（エポック秒）
+        uint[] memory rewards, // 各クイズの報酬
+        uint[] memory respondent_limits // 各クイズの回答者制限
     ) public {
         uint quizCount = quizDataArray.length;
         require(quizCount > 0, "At least one quiz is required");
+        require(quizCount == startline_after_epochs.length, "Mismatch in quiz count and start times");
+        require(quizCount == timelimit_after_epochs.length, "Mismatch in quiz count and time limits");
+        require(quizCount == rewards.length, "Mismatch in quiz count and rewards");
+        require(quizCount == respondent_limits.length, "Mismatch in quiz count and respondent limits");
 
-        require(token.allowance(msg.sender, address(this)) >= _reward * _respondent_limit * quizCount, "Not enough token approve fees");
-        token.transferFrom_explanation(msg.sender, address(this), _reward * _respondent_limit * quizCount, "create_bulk_quizzes");
+        // トークンの承認を確認
+        uint totalReward = 0;
+        for (uint i = 0; i < quizCount; i++) {
+            totalReward += rewards[i] * respondent_limits[i];
+        }
+        require(token.allowance(msg.sender, address(this)) >= totalReward, "Not enough token approve fees");
+        token.transferFrom_explanation(msg.sender, address(this), totalReward, "create_bulk_quizzes");
 
         uint startId = quizs.length; // 最初のクイズID
         uint[] memory quizIds = new uint[](quizCount);
@@ -161,11 +178,11 @@ contract Quiz_Dapp is class_room {
             quizs[id].answer_data = quizDataArray[i].answer_data;
             quizs[id].answer_hash = answer_hash;
             quizs[id].create_time_epoch = block.timestamp;
-            quizs[id].start_time_epoch = _startline_after_epoch;
-            quizs[id].time_limit_epoch = _timelimit_after_epoch;
-            quizs[id].reward = _reward;
+            quizs[id].start_time_epoch = startline_after_epochs[i];
+            quizs[id].time_limit_epoch = timelimit_after_epochs[i];
+            quizs[id].reward = rewards[i];
             quizs[id].respondent_count = 0;
-            quizs[id].respondent_limit = _respondent_limit;
+            quizs[id].respondent_limit = respondent_limits[i];
             users[msg.sender].create_quiz_count += 1;
             
             quizIds[i] = id; // セット内のクイズIDを保存
@@ -388,6 +405,47 @@ contract Quiz_Dapp is class_room {
         }
         
         emit Save_answer(msg.sender, _quiz_id, _quiz_state);
+    }
+    
+    // 新しいイベントの追加
+    event BulkAnswersSubmitted(address indexed sender, uint[] quizIds, address[] userAddresses);
+    event RewardsDistributed(uint indexed quizId, address[] winners);
+
+    // 一括解答の処理
+    function bulkSubmitAnswers(AnswerData[] memory answers) public {
+        uint[] memory quizIds = new uint[](answers.length);
+        address[] memory userAddresses = new address[](answers.length); // 変数名を変更
+
+        for (uint i = 0; i < answers.length; i++) {
+            uint quizId = answers[i].quizId;
+            string memory answer = answers[i].answer;
+            address user = answers[i].user;
+
+            // 既存のsave_answerの処理を使って解答を保存
+            save_answer(quizId, answer);
+
+            // イベント用にクイズIDとユーザーを保存
+            quizIds[i] = quizId;
+            userAddresses[i] = user; // 修正した変数名を使用
+        }
+
+        // 一括解答イベントを発火
+        emit BulkAnswersSubmitted(msg.sender, quizIds, userAddresses);
+    }
+
+    // 一括報酬配布の関数
+    function distributeRewards(uint quizId, address[] memory winners) public {
+        uint rewardAmount = quizs[quizId].reward;
+        require(rewardAmount > 0, "No rewards set for this quiz");
+
+        for (uint i = 0; i < winners.length; i++) {
+            address winner = winners[i];
+            // トークンを報酬として配布
+            token.transfer_explanation(winner, rewardAmount, "Reward for correct answer");
+        }
+
+        // 報酬配布イベントを発火
+        emit RewardsDistributed(quizId, winners);
     }
 
     event Payment_of_reward(uint indexed _quiz_id);

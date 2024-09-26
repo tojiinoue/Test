@@ -69,7 +69,7 @@ class Contracts_MetaMask {
                 type: "ERC20",
                 options: {
                     address: token_address,
-                    symbol: "FLT",
+                    symbol: "Trial",
                     decimals: 18,
                 },
             },
@@ -633,7 +633,7 @@ class Contracts_MetaMask {
         return res;
     }
 
-    async get_quiz_length() {
+    async get_quiz_lenght() {
         return await quiz.read.get_quiz_length();
     }
 
@@ -843,129 +843,6 @@ class Contracts_MetaMask {
             }
         } catch (err) {
             console.log(err);
-        }
-    }
-
-    async create_bulk_quizzes(mainTitle, titles, explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects, replyStartline, replyDeadline, reward, correctLimit, setShow) {
-        // 基本的な引数の型とフォーマットのチェック
-        if (typeof mainTitle !== 'string') throw new Error('mainTitle must be a string');
-        if (!Array.isArray(titles) || !titles.every(t => typeof t === 'string')) throw new Error('titles must be an array of strings');
-        if (!Array.isArray(explanations) || !explanations.every(e => typeof e === 'string')) throw new Error('explanations must be an array of strings');
-        if (!Array.isArray(thumbnailUrls) || !thumbnailUrls.every(t => typeof t === 'string')) throw new Error('thumbnailUrls must be an array of strings');
-        if (!Array.isArray(contents) || !contents.every(c => typeof c === 'string')) throw new Error('contents must be an array of strings');
-        if (!Array.isArray(answerTypes) || !answerTypes.every(a => typeof a === 'number')) throw new Error('answerTypes must be an array of numbers');
-        if (!Array.isArray(answerDataArray) || !answerDataArray.every(a => typeof a === 'string')) throw new Error('answerDataArray must be an array of strings');
-        if (!Array.isArray(corrects) || !corrects.every(c => typeof c === 'string')) throw new Error('corrects must be an array of strings');
-        if (typeof replyStartline !== 'string' || isNaN(Date.parse(replyStartline))) throw new Error('replyStartline must be a valid date string');
-        if (typeof replyDeadline !== 'string' || isNaN(Date.parse(replyDeadline))) throw new Error('replyDeadline must be a valid date string');
-        if (typeof reward !== 'number') throw new Error('reward must be a number');
-        if (typeof correctLimit !== 'number') throw new Error('correctLimit must be a number');
-        if (typeof setShow !== 'function') throw new Error('setShow must be a function');
-    
-        // 配列の長さのチェック
-        const arrayLength = titles.length;
-        if (![explanations, thumbnailUrls, contents, answerTypes, answerDataArray, corrects].every(arr => arr.length === arrayLength)) {
-            throw new Error('All input arrays must have the same length');
-        }
-        
-        setShow(true);
-        let res = null;
-        let hash = null;
-        reward = reward * 10 ** 18;
-    
-        const dateStartObj = new Date(replyStartline);
-        const dateEndObj = new Date(replyDeadline);
-        const epochStartSeconds = Math.floor(dateStartObj.getTime() / 1000);
-        const epochEndSeconds = Math.floor(dateEndObj.getTime() / 1000);
-    
-        const quizDataArray = titles.map((title, index) => ({
-            title: title,
-            explanation: explanations[index],
-            thumbnail_url: thumbnailUrls[index],
-            content: contents[index],
-            answer_type: answerTypes[index],
-            answer_data: answerDataArray[index],
-            answer: corrects[index]
-        }));
-    
-        try {
-            if (ethereum) {
-                let account = await this.get_address();
-                let approval = await token.read.allowance({ account, args: [account, quiz_address] });
-    
-                if (Number(approval) >= Number(reward * correctLimit * quizDataArray.length)) {
-                    hash = await this._create_bulk_quizzes(account, mainTitle, quizDataArray, epochStartSeconds, epochEndSeconds, reward, correctLimit);
-                    if (hash) {
-                        res = await publicClient.waitForTransactionReceipt({ hash });
-                    }
-                } else {
-                    hash = await this.approve(account, reward * correctLimit * quizDataArray.length);
-                    if (hash) {
-                        res = await publicClient.waitForTransactionReceipt({ hash });
-                        hash = await this._create_bulk_quizzes(account, mainTitle, quizDataArray, epochStartSeconds, epochEndSeconds, reward, correctLimit);
-                        if (hash) {
-                            res = await publicClient.waitForTransactionReceipt({ hash });
-                        }
-                    }
-                }
-            } else {
-                setShow(false);
-                console.log("Ethereum object does not exist");
-            }
-        } catch (err) {
-            setShow(false);
-            console.log(err);
-        }
-        document.location.href = homeUrl + "/list_quiz";
-    }
-    
-    // _create_bulk_quizzes ヘルパー関数
-    async _create_bulk_quizzes(account, mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit) {
-        try {
-            const { request } = await publicClient.simulateContract({
-                account,
-                address: quiz_address,
-                abi: quiz_abi,
-                functionName: "create_bulk_quizzes",
-                args: [mainTitle, quizDataArray, startlineAfterEpoch, timelimitAfterEpoch, reward, respondentLimit]
-            });
-            return await walletClient.writeContract(request);
-        } catch (e) {
-            console.log("Error in _create_bulk_quizzes", e);
-        }
-    }
-
-    async bulkSubmitAnswers(answers) {
-        if (!ethereum) return console.error("Ethereum provider is not available");
-        try {
-            const account = await this.get_address();
-            const { request } = await publicClient.simulateContract({
-                account,
-                address: quiz_address,
-                abi: quiz_abi,
-                functionName: "bulkSubmitAnswers",
-                args: [answers]
-            });
-            return await walletClient.writeContract(request);
-        } catch (e) {
-            console.error("Error in bulkSubmitAnswers:", e);
-        }
-    }
-
-    async distributeRewards(quizId, winners) {
-        if (!ethereum) return console.error("Ethereum provider is not available");
-        try {
-            const account = await this.get_address();
-            const { request } = await publicClient.simulateContract({
-                account,
-                address: quiz_address,
-                abi: quiz_abi,
-                functionName: "distributeRewards",
-                args: [quizId, winners]
-            });
-            return await walletClient.writeContract(request);
-        } catch (e) {
-            console.error("Error in distributeRewards:", e);
         }
     }
 }

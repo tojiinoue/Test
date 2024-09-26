@@ -21,6 +21,24 @@ function create_col1() {
     );
 }
 
+// 出題ボタンの定義
+function create_quiz_button(prop) {
+    return (
+        <div className="col-3">
+            <Nav.Item>
+                <Nav.Link eventKey="create_quiz" href={prop + "/create_quiz"}>
+                    <div className="col-12">
+                        <MdOutlineQuiz size={30} />
+                    </div>
+                    <div className="col-12 d-flex justify-content-center align-items-center">
+                        <font size="2">出題</font>
+                    </div>
+                </Nav.Link>
+            </Nav.Item>
+        </div>
+    );
+}
+
 function create_edit_button(prop) {
     return (
         <div className="col-3">
@@ -57,7 +75,7 @@ function Nav_menu(props) {
     return (
         <>
             <Modal_change_network chain_id={chain_id} cont={props.cont} />
-            <div style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+            <div className="row" style={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
                 <Navbar
                     fixed="bottom"
                     bg="light"
@@ -81,18 +99,8 @@ function Nav_menu(props) {
                             </Nav.Item>
                         </div>
                         {!isTeacher ? create_col1() : ""}
-                        <div className="col-3">
-                            <Nav.Item>
-                                <Nav.Link eventKey="create_quiz" href={props.home + "/create_quiz"}>
-                                    <div className="col-12 ">
-                                        <MdOutlineQuiz size={30} />
-                                    </div>
-                                    <div className="col-12 d-flex justify-content-center align-items-center">
-                                        <font size="2">出題</font>
-                                    </div>
-                                </Nav.Link>
-                            </Nav.Item>
-                        </div>
+                        {/* 先生のみ出題ボタンを表示 */}
+                        {isTeacher ? create_quiz_button(props.home) : ""}
                         {!isTeacher ? create_col1() : ""}
                         <div className="col-3">
                             <Nav.Item>
