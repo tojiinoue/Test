@@ -142,7 +142,7 @@ function Simple_quiz(props) {
                                     <div className="col-3">
                                         <div className="col">状態</div>
                                         <div className="col" style={{ textAlign: "center" }}>
-                                            {Number(props.quiz[10]) == 0 ? "未解答" : Number(props.quiz[10]) == 1 ? "不正解" : Number(props.quiz[10]) == 2 ? "正解" : Number(props.quiz[10]) == 3 ? "解答済み" : ""}
+                                            {Number(props.quiz[10]) == 0 ? "未解答" : Number(props.quiz[10]) == 1 ? "解答済み" : Number(props.quiz[10]) == 2 ? "正解" : Number(props.quiz[10]) == 3 ? "解答済み" : ""}
                                         </div>
                                     </div>
                                     {/* <div className="col-3 ">正解数:{props.quiz[7].toNumber()}</div>
