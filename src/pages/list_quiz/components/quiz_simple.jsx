@@ -145,10 +145,6 @@ function Simple_quiz(props) {
                                             {Number(props.quiz[10]) == 0 ? "未解答" : Number(props.quiz[10]) == 1 ? "解答済み" : Number(props.quiz[10]) == 2 ? "正解" : Number(props.quiz[10]) == 3 ? "解答済み" : ""}
                                         </div>
                                     </div>
-                                    <div className="reason" style={{padding: "0", "padding-top": "10px", margin: "0", textAlign: "left"}}>
-                                        {props.history._explanation}
-                                        <br />
-                                    </div>
                                     {/* <div className="col-3 ">正解数:{props.quiz[7].toNumber()}</div>
                             <div className="col-3 ">上限:{props.quiz[8].toNumber()}</div>
                             <div className="col-3 "> 状態:{props.quiz[9].toNumber()}</div> */}
