@@ -847,25 +847,25 @@ class Contracts_MetaMask {
     }
 
     async reduce_reward(id, amount) {
-        try {
-          if (ethereum) {
-            let account = await this.get_address();
-            const { request } = await publicClient.simulateContract({
-              account,
-              address: quiz_address,
-              abi: quiz_abi,
-              functionName: "reduce_reward",
-              args: [id, amount],
-            });
-    
-            return await walletClient.writeContract(request);
-          } else {
-            console.log("Ethereum object does not exist");
-          }
-        } catch (err) {
-          console.log(err);
-        }
+    try {
+      if (ethereum) {
+        let account = await this.get_address();
+        const { request } = await publicClient.simulateContract({
+          account,
+          address: quiz_address,
+          abi: quiz_abi,
+          functionName: "reduce_reward",
+          args: [id, amount],
+        });
+
+        return await walletClient.writeContract(request);
+      } else {
+        console.log("Ethereum object does not exist");
       }
+    } catch (err) {
+      console.log(err);
+    }
+  }
 }
 
 export { Contracts_MetaMask };
